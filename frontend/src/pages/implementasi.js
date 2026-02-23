@@ -1,627 +1,219 @@
-import React, { useState } from 'react';
-import patientsData from '../data/patients';
-import '../assets/Dashboard.css';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import '../assets/Implementasi.css';
+import { getPatients, getPendingInterventions, getCompletedImplementations, saveImplementation as apiSaveImpl, getImplementationDetail } from '../services/api';
+
+const priorityMap = { Tinggi: 'high', Sedang: 'medium', Rendah: 'low' };
+
+const formatTime = (timeString) =>
+  new Date(timeString).toLocaleString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 const Implementasi = () => {
+  const [allPatients, setAllPatients] = useState([]);
+  const [pendingInterventions, setPendingInterventions] = useState([]);
+  const [completedImplementations, setCompletedImplementations] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState('');
   const [searchPatient, setSearchPatient] = useState('');
-  // Data pasien dari shared data
-  const allPatients = patientsData;
   const [activeTab, setActiveTab] = useState('pending');
-  const [showImplementationForm, setShowImplementationForm] = useState(false);
-  const [implementationData, setImplementationData] = useState({
+  const [showForm, setShowForm] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailData, setDetailData] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const initialFormData = {
     intervention_id: '',
     implementation_note: '',
     patient_response: '',
-    vital_signs: {
-      blood_pressure: '',
-      pulse: '',
-      temperature: '',
-      respiration: '',
-      oxygen_saturation: ''
-    },
+    vital_signs: { blood_pressure: '', pulse: '', temperature: '', respiration: '', oxygen_saturation: '' },
     complications: '',
     next_action: '',
     nurse_name: '',
-    implementation_time: new Date().toISOString().slice(0, 16)
-  });
+    implementation_time: new Date().toISOString().slice(0, 16),
+  };
+  const [formData, setFormData] = useState(initialFormData);
 
-  // Data contoh pasien dengan rencana askep
-  const patientsWithPlans = [
-    {
-      id: 'P001',
-      name: 'Ahmad Wijaya',
-      rm: 'RM001',
-      diagnosis: 'Diabetes Mellitus',
-      plans: [
-        {
-          id: 'PLAN001',
-          title: 'Manajemen Diabetes Mellitus',
-          created_date: '2025-09-28',
-          status: 'active'
-        }
-      ]
-    },
-    {
-      id: 'P002',
-      name: 'Siti Aminah',
-      rm: 'RM002',
-      diagnosis: 'Hipertensi',
-      plans: [
-        {
-          id: 'PLAN002',
-          title: 'Kontrol Tekanan Darah',
-          created_date: '2025-09-29',
-          status: 'active'
-        }
-      ]
-    },
-    {
-      id: 'P003',
-      name: 'Budi Santoso',
-      rm: 'RM003',
-      diagnosis: 'Stroke',
-      plans: [
-        {
-          id: 'PLAN003',
-          title: 'Rehabilitasi Post Stroke',
-          created_date: '2025-09-27',
-          status: 'active'
-        }
-      ]
-    }
-  ];
+  const fetchData = useCallback(async () => {
+    try {
+      const [pts, pending, completed] = await Promise.all([
+        getPatients(),
+        getPendingInterventions(),
+        getCompletedImplementations(),
+      ]);
+      setAllPatients(pts);
+      setPendingInterventions(pending);
+      setCompletedImplementations(completed);
+    } catch (e) { console.error(e); }
+  }, []);
 
-  // Data contoh intervensi yang menunggu implementasi
-  const pendingInterventions = [
-    {
-      id: 'INT001',
-      patient_id: 'P001',
-      patient_name: 'Ahmad Wijaya',
-      intervention: 'Monitor kadar glukosa darah',
-      frequency: 'Setiap 6 jam',
-      scheduled_time: '2025-09-30T08:00',
-      priority: 'Tinggi',
-      status: 'pending'
-    },
-    {
-      id: 'INT002',
-      patient_id: 'P001',
-      patient_name: 'Ahmad Wijaya',
-      intervention: 'Berikan edukasi diet diabetes',
-      frequency: 'Setiap hari',
-      scheduled_time: '2025-09-30T10:00',
-      priority: 'Sedang',
-      status: 'pending'
-    },
-    {
-      id: 'INT003',
-      patient_id: 'P002',
-      patient_name: 'Siti Aminah',
-      intervention: 'Monitoring tekanan darah',
-      frequency: 'Setiap 4 jam',
-      scheduled_time: '2025-09-30T09:00',
-      priority: 'Tinggi',
-      status: 'pending'
-    },
-    {
-      id: 'INT004',
-      patient_id: 'P003',
-      patient_name: 'Budi Santoso',
-      intervention: 'Latihan mobilisasi',
-      frequency: '2x sehari',
-      scheduled_time: '2025-09-30T11:00',
-      priority: 'Sedang',
-      status: 'pending'
-    },
-    // Tambahan intervensi untuk pasien baru agar tampilan lebih hidup
-    {
-      id: 'INT005',
-      patient_id: 'P006',
-      patient_name: 'Lina Marlina',
-      intervention: 'Inhalasi bronkodilator',
-      frequency: 'Setiap 8 jam',
-      scheduled_time: '2025-09-30T07:00',
-      priority: 'Sedang',
-      status: 'pending'
-    },
-    {
-      id: 'INT006',
-      patient_id: 'P007',
-      patient_name: 'Hendra Gunawan',
-      intervention: 'Pantau cairan dan diet renal',
-      frequency: 'Setiap hari',
-      scheduled_time: '2025-09-30T09:30',
-      priority: 'Tinggi',
-      status: 'pending'
-    },
-    {
-      id: 'INT007',
-      patient_id: 'P008',
-      patient_name: 'Nur Aisyah',
-      intervention: 'Pemberian suplemen zat besi',
-      frequency: 'Setiap hari',
-      scheduled_time: '2025-09-30T10:30',
-      priority: 'Sedang',
-      status: 'pending'
-    },
-    {
-      id: 'INT008',
-      patient_id: 'P010',
-      patient_name: 'Maria Josephine',
-      intervention: 'Pantau tanda syok & cairan',
-      frequency: 'Setiap 4 jam',
-      scheduled_time: '2025-09-30T12:00',
-      priority: 'Tinggi',
-      status: 'pending'
-    },
-    {
-      id: 'INT009',
-      patient_id: 'P012',
-      patient_name: 'Tania Kusuma',
-      intervention: 'Pantau output urin',
-      frequency: 'Setiap 6 jam',
-      scheduled_time: '2025-09-30T13:00',
-      priority: 'Sedang',
-      status: 'pending'
-    },
-    {
-      id: 'INT010',
-      patient_id: 'P015',
-      patient_name: 'Dedi Kurniawan',
-      intervention: 'Pantau kadar gula & tekanan darah',
-      frequency: 'Setiap 8 jam',
-      scheduled_time: '2025-09-30T14:00',
-      priority: 'Tinggi',
-      status: 'pending'
-    },
-    {
-      id: 'INT011',
-      patient_id: 'P018',
-      patient_name: 'Silvia Anggraini',
-      intervention: 'Pantau nyeri & edukasi diet',
-      frequency: 'Setiap hari',
-      scheduled_time: '2025-09-30T15:00',
-      priority: 'Sedang',
-      status: 'pending'
-    },
-    {
-      id: 'INT012',
-      patient_id: 'P020',
-      patient_name: 'Ratna Dewi',
-      intervention: 'Pantau keseimbangan & edukasi vertigo',
-      frequency: 'Setiap hari',
-      scheduled_time: '2025-09-30T16:00',
-      priority: 'Sedang',
-      status: 'pending'
-    }
-  ];
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Data contoh implementasi yang sudah selesai
-  const completedImplementations = [
-    {
-      id: 'IMP001',
-      patient_id: 'P001',
-      patient_name: 'Ahmad Wijaya',
-      intervention: 'Monitor kadar glukosa darah',
-      implementation_note: 'Pemeriksaan gula darah menggunakan glucometer. Hasil: 180 mg/dL',
-      patient_response: 'Pasien kooperatif, tidak ada keluhan',
-      vital_signs: {
-        blood_pressure: '130/80',
-        pulse: '88',
-        temperature: '36.5',
-        respiration: '20',
-        oxygen_saturation: '98'
-      },
-      nurse_name: 'Ns. Maria',
-      implementation_time: '2025-09-30T06:00',
-      status: 'completed'
-    },
-    {
-      id: 'IMP002',
-      patient_id: 'P002',
-      patient_name: 'Siti Aminah',
-      intervention: 'Monitoring tekanan darah',
-      implementation_note: 'Pengukuran TD menggunakan tensimeter digital',
-      patient_response: 'Pasien mengeluh pusing ringan',
-      vital_signs: {
-        blood_pressure: '150/90',
-        pulse: '92',
-        temperature: '36.8',
-        respiration: '18',
-        oxygen_saturation: '97'
-      },
-      nurse_name: 'Ns. Sari',
-      implementation_time: '2025-09-30T05:00',
-      status: 'completed'
-    },
-    // Tambahan implementasi selesai untuk pasien lain
-    {
-      id: 'IMP003',
-      patient_id: 'P006',
-      patient_name: 'Lina Marlina',
-      intervention: 'Inhalasi bronkodilator',
-      implementation_note: 'Pemberian inhalasi sesuai dosis, pasien tampak lega setelah terapi.',
-      patient_response: 'Pasien melaporkan napas lebih lega, tidak ada wheezing.',
-      vital_signs: {
-        blood_pressure: '120/80',
-        pulse: '84',
-        temperature: '36.7',
-        respiration: '18',
-        oxygen_saturation: '99'
-      },
-      nurse_name: 'Ns. Rina',
-      implementation_time: '2025-09-30T07:30',
-      status: 'completed'
-    },
-    {
-      id: 'IMP004',
-      patient_id: 'P007',
-      patient_name: 'Hendra Gunawan',
-      intervention: 'Pantau cairan dan diet renal',
-      implementation_note: 'Asupan cairan dibatasi, edukasi diet renal diberikan.',
-      patient_response: 'Pasien memahami instruksi, tidak ada keluhan.',
-      vital_signs: {
-        blood_pressure: '140/90',
-        pulse: '90',
-        temperature: '36.6',
-        respiration: '20',
-        oxygen_saturation: '97'
-      },
-      nurse_name: 'Ns. Dedi',
-      implementation_time: '2025-09-30T09:45',
-      status: 'completed'
-    },
-    {
-      id: 'IMP005',
-      patient_id: 'P008',
-      patient_name: 'Nur Aisyah',
-      intervention: 'Pemberian suplemen zat besi',
-      implementation_note: 'Suplemen diberikan oral, pasien diobservasi efek samping.',
-      patient_response: 'Pasien tidak mengeluh mual, tampak kooperatif.',
-      vital_signs: {
-        blood_pressure: '110/70',
-        pulse: '80',
-        temperature: '36.5',
-        respiration: '19',
-        oxygen_saturation: '99'
-      },
-      nurse_name: 'Ns. Sari',
-      implementation_time: '2025-09-30T10:45',
-      status: 'completed'
-    },
-    {
-      id: 'IMP006',
-      patient_id: 'P010',
-      patient_name: 'Maria Josephine',
-      intervention: 'Pantau tanda syok & cairan',
-      implementation_note: 'Tanda vital stabil, tidak ada tanda syok, cairan IV berjalan baik.',
-      patient_response: 'Pasien tampak tenang, tidak ada keluhan.',
-      vital_signs: {
-        blood_pressure: '115/75',
-        pulse: '86',
-        temperature: '36.8',
-        respiration: '20',
-        oxygen_saturation: '98'
-      },
-      nurse_name: 'Ns. Maria',
-      implementation_time: '2025-09-30T12:30',
-      status: 'completed'
-    },
-    {
-      id: 'IMP007',
-      patient_id: 'P012',
-      patient_name: 'Tania Kusuma',
-      intervention: 'Pantau output urin',
-      implementation_note: 'Output urin dicatat, tidak ada tanda infeksi.',
-      patient_response: 'Pasien tidak mengeluh nyeri saat BAK.',
-      vital_signs: {
-        blood_pressure: '112/72',
-        pulse: '78',
-        temperature: '36.4',
-        respiration: '18',
-        oxygen_saturation: '99'
-      },
-      nurse_name: 'Ns. Rina',
-      implementation_time: '2025-09-30T13:30',
-      status: 'completed'
-    },
-    {
-      id: 'IMP008',
-      patient_id: 'P015',
-      patient_name: 'Dedi Kurniawan',
-      intervention: 'Pantau kadar gula & tekanan darah',
-      implementation_note: 'Gula darah dan TD dipantau, edukasi diberikan.',
-      patient_response: 'Pasien kooperatif, tidak ada keluhan.',
-      vital_signs: {
-        blood_pressure: '145/95',
-        pulse: '88',
-        temperature: '36.9',
-        respiration: '20',
-        oxygen_saturation: '97'
-      },
-      nurse_name: 'Ns. Dedi',
-      implementation_time: '2025-09-30T14:30',
-      status: 'completed'
-    },
-    {
-      id: 'IMP009',
-      patient_id: 'P018',
-      patient_name: 'Silvia Anggraini',
-      intervention: 'Pantau nyeri & edukasi diet',
-      implementation_note: 'Nyeri dievaluasi, edukasi diet lambung diberikan.',
-      patient_response: 'Pasien mengaku nyeri berkurang setelah edukasi.',
-      vital_signs: {
-        blood_pressure: '118/76',
-        pulse: '82',
-        temperature: '36.6',
-        respiration: '18',
-        oxygen_saturation: '99'
-      },
-      nurse_name: 'Ns. Sari',
-      implementation_time: '2025-09-30T15:30',
-      status: 'completed'
-    },
-    {
-      id: 'IMP010',
-      patient_id: 'P020',
-      patient_name: 'Ratna Dewi',
-      intervention: 'Pantau keseimbangan & edukasi vertigo',
-      implementation_note: 'Edukasi pencegahan vertigo, latihan keseimbangan dilakukan.',
-      patient_response: 'Pasien tampak lebih percaya diri berjalan.',
-      vital_signs: {
-        blood_pressure: '120/80',
-        pulse: '80',
-        temperature: '36.5',
-        respiration: '18',
-        oxygen_saturation: '99'
-      },
-      nurse_name: 'Ns. Rina',
-      implementation_time: '2025-09-30T16:30',
-      status: 'completed'
-    }
-  ];
+  const filteredPending = useMemo(() =>
+    pendingInterventions.filter(i => {
+      const matchPat = selectedPatient ? i.patient_id === selectedPatient : true;
+      const matchSearch = searchPatient ? i.patient_name.toLowerCase().includes(searchPatient.toLowerCase()) : true;
+      return matchPat && matchSearch;
+    }), [selectedPatient, searchPatient, pendingInterventions]);
+
+  const filteredCompleted = useMemo(() =>
+    completedImplementations.filter(i => {
+      const matchPat = selectedPatient ? i.patient_id === selectedPatient : true;
+      const matchSearch = searchPatient ? i.patient_name.toLowerCase().includes(searchPatient.toLowerCase()) : true;
+      return matchPat && matchSearch;
+    }), [selectedPatient, searchPatient, completedImplementations]);
+
+  const highPriorityCount = filteredPending.filter(i => i.priority === 'Tinggi').length;
 
   const handleInputChange = (field, value) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      setImplementationData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
+      setFormData(prev => ({ ...prev, [parent]: { ...prev[parent], [child]: value } }));
     } else {
-      setImplementationData(prev => ({
-        ...prev,
-        [field]: value
-      }));
+      setFormData(prev => ({ ...prev, [field]: value }));
     }
   };
 
-  const handleImplementIntervention = (intervention) => {
-    setImplementationData({
-      ...implementationData,
-      intervention_id: intervention.id,
-      implementation_time: new Date().toISOString().slice(0, 16)
-    });
-    setShowImplementationForm(true);
+  const openForm = (intervention) => {
+    setFormData({ ...initialFormData, intervention_id: intervention.id, implementation_time: new Date().toISOString().slice(0, 16) });
+    setShowForm(true);
   };
 
-  const handleSaveImplementation = () => {
-    if (!implementationData.implementation_note) {
-      alert('Mohon lengkapi catatan implementasi');
-      return;
-    }
-
-    // Logic untuk menyimpan implementasi
-    alert('Implementasi berhasil disimpan!');
-    setShowImplementationForm(false);
-    setImplementationData({
-      intervention_id: '',
-      implementation_note: '',
-      patient_response: '',
-      vital_signs: {
-        blood_pressure: '',
-        pulse: '',
-        temperature: '',
-        respiration: '',
-        oxygen_saturation: ''
-      },
-      complications: '',
-      next_action: '',
-      nurse_name: '',
-      implementation_time: new Date().toISOString().slice(0, 16)
-    });
-  };
-
-  const formatTime = (timeString) => {
-    return new Date(timeString).toLocaleString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'Tinggi': return 'high';
-      case 'Sedang': return 'medium';
-      case 'Rendah': return 'low';
-      default: return 'medium';
+  const saveImplementation = async () => {
+    if (!formData.implementation_note) { alert('Mohon lengkapi catatan implementasi'); return; }
+    setSaving(true);
+    try {
+      await apiSaveImpl(formData);
+      alert('Implementasi berhasil disimpan!');
+      setShowForm(false);
+      setFormData(initialFormData);
+      fetchData(); // Refresh data from backend
+    } catch (err) {
+      alert(err.message || 'Gagal menyimpan implementasi');
+    } finally {
+      setSaving(false);
     }
   };
 
+  const handleDetail = async (item) => {
+    try {
+      const data = await getImplementationDetail(item.id);
+      setDetailData(data);
+      setShowDetailModal(true);
+    } catch (e) {
+      setDetailData(item);
+      setShowDetailModal(true);
+    }
+  };
 
-  // Filter by patient select and search
-  const filteredInterventions = pendingInterventions.filter(int => {
-    const matchPatient = selectedPatient ? int.patient_id === selectedPatient : true;
-    const matchSearch = searchPatient ? int.patient_name.toLowerCase().includes(searchPatient.toLowerCase()) : true;
-    return matchPatient && matchSearch;
-  });
+  const handlePrint = (item) => {
+    const printContent = `
+LAPORAN IMPLEMENTASI KEPERAWATAN
+================================
+Pasien: ${item.patient_name}
+Intervensi: ${item.intervention}
+Catatan: ${item.implementation_note}
+Respon Pasien: ${item.patient_response}
+Tanda Vital: TD ${item.vital_signs?.blood_pressure || '-'} | Nadi ${item.vital_signs?.pulse || '-'} | Suhu ${item.vital_signs?.temperature || '-'}°C | RR ${item.vital_signs?.respiration || '-'} | SpO2 ${item.vital_signs?.oxygen_saturation || '-'}%
+Perawat: ${item.nurse_name}
+Waktu: ${formatTime(item.implementation_time)}
+================================`;
+    const w = window.open('', '_blank');
+    w.document.write('<pre>' + printContent + '</pre>');
+    w.document.close();
+    w.print();
+  };
 
-  const filteredImplementations = completedImplementations.filter(imp => {
-    const matchPatient = selectedPatient ? imp.patient_id === selectedPatient : true;
-    const matchSearch = searchPatient ? imp.patient_name.toLowerCase().includes(searchPatient.toLowerCase()) : true;
-    return matchPatient && matchSearch;
-  });
+  const icons = {
+    clock: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>),
+    check: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>),
+    alert: (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>),
+    search: (<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>),
+    eye: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>),
+    checkSmall: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>),
+    file: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></svg>),
+    edit: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>),
+    x: (<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>),
+    save: (<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>),
+    emptyPending: (<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 11-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>),
+    emptyCompleted: (<svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><line x1="3" y1="9" x2="21" y2="9" /><line x1="9" y1="21" x2="9" y2="9" /></svg>),
+  };
 
   return (
-    <div className="dashboard-content">
-      <div className="page-header">
-        <div className="header-content">
-          <h1>Implementasi Keperawatan</h1>
-          <p className="header-subtitle">Catat dan kelola implementasi tindakan keperawatan</p>
+    <div className="im-page">
+      <div className="im-header">
+        <div className="im-header-text">
+          <h1 className="im-title">Implementasi Keperawatan</h1>
+          <p className="im-subtitle">Catat dan kelola implementasi tindakan keperawatan</p>
         </div>
-        <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="search-patient-box">
-            <input
-              type="text"
-              className="search-patient-input"
-              placeholder={allPatients && allPatients.length > 0 ? `Cari pasien... (${allPatients.map(p=>p.name).slice(0,3).join(', ')}${allPatients.length>3?', ...':''})` : 'Cari pasien...'}
-              value={searchPatient}
-              onChange={e => setSearchPatient(e.target.value)}
-              list="all-patients-list"
-              style={{ padding: '0.5rem 1rem', borderRadius: 8, border: '1px solid #d1d5db', fontSize: '0.95rem', minWidth: 180 }}
-            />
-            <datalist id="all-patients-list">
-              {allPatients && allPatients.map(p => (
-                <option key={p.id} value={p.name} />
-              ))}
-            </datalist>
+        <div className="im-header-actions">
+          <div className="im-search-box">
+            {icons.search}
+            <input type="text" className="im-search-input" placeholder="Cari pasien..." value={searchPatient} onChange={e => setSearchPatient(e.target.value)} />
           </div>
-          <select 
-            className="patient-filter"
-            value={selectedPatient}
-            onChange={(e) => setSelectedPatient(e.target.value)}
-          >
+          <select className="im-filter-select" value={selectedPatient} onChange={e => setSelectedPatient(e.target.value)}>
             <option value="">Semua Pasien</option>
-            {allPatients && allPatients.map(patient => (
-              <option key={patient.id} value={patient.id}>
-                {patient.name} ({patient.rm})
-              </option>
-            ))}
+            {allPatients && allPatients.map(p => (<option key={p.id} value={p.id}>{p.name} ({p.rm})</option>))}
           </select>
         </div>
       </div>
 
-      {/* Stats Overview */}
-      <div className="implementation-stats">
-        <div className="stat-card-small">
-          <div className="stat-icon-small pending">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
+      <div className="im-stats">
+        <div className="im-stat-card">
+          <div className="im-stat-icon im-stat-icon--pending">{icons.clock}</div>
+          <div className="im-stat-info">
+            <span className="im-stat-label">Menunggu</span>
+            <span className="im-stat-value">{filteredPending.length}</span>
           </div>
-          <div className="stat-content-small">
-            <h4>Menunggu</h4>
-            <p>{filteredInterventions.length}</p>
-          </div>
+          <div className="im-stat-bar"><div className="im-stat-bar-fill im-stat-bar--pending" style={{ width: `${Math.min(filteredPending.length * 10, 100)}%` }} /></div>
         </div>
-        
-        <div className="stat-card-small">
-          <div className="stat-icon-small completed">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-            </svg>
+        <div className="im-stat-card">
+          <div className="im-stat-icon im-stat-icon--completed">{icons.check}</div>
+          <div className="im-stat-info">
+            <span className="im-stat-label">Selesai Hari Ini</span>
+            <span className="im-stat-value">{filteredCompleted.length}</span>
           </div>
-          <div className="stat-content-small">
-            <h4>Selesai Hari Ini</h4>
-            <p>{filteredImplementations.length}</p>
-          </div>
+          <div className="im-stat-bar"><div className="im-stat-bar-fill im-stat-bar--completed" style={{ width: `${Math.min(filteredCompleted.length * 10, 100)}%` }} /></div>
         </div>
-        
-        <div className="stat-card-small">
-          <div className="stat-icon-small priority">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-            </svg>
+        <div className="im-stat-card">
+          <div className="im-stat-icon im-stat-icon--priority">{icons.alert}</div>
+          <div className="im-stat-info">
+            <span className="im-stat-label">Prioritas Tinggi</span>
+            <span className="im-stat-value">{highPriorityCount}</span>
           </div>
-          <div className="stat-content-small">
-            <h4>Prioritas Tinggi</h4>
-            <p>{filteredInterventions.filter(int => int.priority === 'Tinggi').length}</p>
-          </div>
+          <div className="im-stat-bar"><div className="im-stat-bar-fill im-stat-bar--priority" style={{ width: `${Math.min(highPriorityCount * 20, 100)}%` }} /></div>
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="tab-navigation">
-        <button 
-          className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
-          onClick={() => setActiveTab('pending')}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-          </svg>
-          Menunggu Implementasi ({filteredInterventions.length})
+      <div className="im-tabs">
+        <button className={`im-tab ${activeTab === 'pending' ? 'im-tab--active' : ''}`} onClick={() => setActiveTab('pending')}>
+          {icons.clock}<span>Menunggu Implementasi ({filteredPending.length})</span>
         </button>
-        <button 
-          className={`tab-button ${activeTab === 'completed' ? 'active' : ''}`}
-          onClick={() => setActiveTab('completed')}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-          </svg>
-          Implementasi Selesai ({filteredImplementations.length})
+        <button className={`im-tab ${activeTab === 'completed' ? 'im-tab--active' : ''}`} onClick={() => setActiveTab('completed')}>
+          {icons.check}<span>Implementasi Selesai ({filteredCompleted.length})</span>
         </button>
       </div>
 
-      {/* Pending Interventions Tab */}
       {activeTab === 'pending' && (
-        <div className="interventions-section">
-          <div className="section-header">
-            <h3 className="section-title">Intervensi Menunggu Implementasi</h3>
-            <p className="section-subtitle">Daftar tindakan keperawatan yang perlu dilakukan</p>
+        <div className="im-section">
+          <div className="im-section-header">
+            <h3 className="im-section-title">Intervensi Menunggu Implementasi</h3>
+            <p className="im-section-sub">Daftar tindakan keperawatan yang perlu dilakukan</p>
           </div>
-
-          {filteredInterventions.length === 0 ? (
-            <div className="empty-state">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
-              <h3>Tidak Ada Intervensi Menunggu</h3>
-              <p>Semua intervensi telah diimplementasikan atau tidak ada pasien yang dipilih</p>
-            </div>
+          {filteredPending.length === 0 ? (
+            <div className="im-empty">{icons.emptyPending}<h3>Tidak Ada Intervensi Menunggu</h3><p>Semua intervensi telah diimplementasikan atau tidak ada pasien yang dipilih</p></div>
           ) : (
-            <div className="interventions-list">
-              {filteredInterventions.map((intervention) => (
-                <div key={intervention.id} className="intervention-card-pending">
-                  <div className="intervention-header">
-                    <div className="patient-info">
-                      <h4>{intervention.patient_name}</h4>
-                      <p>Jadwal: {formatTime(intervention.scheduled_time)}</p>
-                    </div>
-                    <div className="intervention-meta">
-                      <span className={`priority-badge ${getPriorityColor(intervention.priority)}`}>
-                        {intervention.priority}
-                      </span>
-                      <span className="frequency-badge">{intervention.frequency}</span>
+            <div className="im-card-list">
+              {filteredPending.map(item => (
+                <div key={item.id} className="im-card im-card--pending">
+                  <div className="im-card-top">
+                    <div className="im-card-patient"><h4>{item.patient_name}</h4><p>Jadwal: {formatTime(item.scheduled_time)}</p></div>
+                    <div className="im-card-badges">
+                      <span className={`im-badge-priority im-badge-priority--${priorityMap[item.priority] || 'medium'}`}>{item.priority}</span>
+                      <span className="im-badge-freq">{item.frequency}</span>
                     </div>
                   </div>
-                  
-                  <div className="intervention-content">
-                    <h5>{intervention.intervention}</h5>
-                  </div>
-
-                  <div className="intervention-actions">
-                    <button 
-                      className="btn-implement"
-                      onClick={() => handleImplementIntervention(intervention)}
-                    >
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                      </svg>
-                      Implementasi
-                    </button>
-                    <button className="btn-secondary-small">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-                      </svg>
-                      Detail
-                    </button>
+                  <div className="im-card-body"><h5>{item.intervention}</h5></div>
+                  <div className="im-card-actions">
+                    <button className="im-btn im-btn--primary" onClick={() => openForm(item)}>{icons.checkSmall} Implementasi</button>
+                    <button className="im-btn im-btn--outline" onClick={() => handleDetail(item)}>{icons.eye} Detail</button>
                   </div>
                 </div>
               ))}
@@ -630,77 +222,42 @@ const Implementasi = () => {
         </div>
       )}
 
-      {/* Completed Implementations Tab */}
       {activeTab === 'completed' && (
-        <div className="implementations-section">
-          <div className="section-header">
-            <h3 className="section-title">Implementasi Selesai</h3>
-            <p className="section-subtitle">Riwayat tindakan keperawatan yang telah dilakukan</p>
+        <div className="im-section">
+          <div className="im-section-header">
+            <h3 className="im-section-title">Implementasi Selesai</h3>
+            <p className="im-section-sub">Riwayat tindakan keperawatan yang telah dilakukan</p>
           </div>
-
-          {filteredImplementations.length === 0 ? (
-            <div className="empty-state">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="6" x2="12" y2="10"/>
-                <line x1="12" y1="14" x2="12" y2="18"/>
-              </svg>
-              <h3>Belum Ada Implementasi</h3>
-              <p>Belum ada implementasi yang tercatat untuk hari ini</p>
-            </div>
+          {filteredCompleted.length === 0 ? (
+            <div className="im-empty">{icons.emptyCompleted}<h3>Belum Ada Implementasi</h3><p>Belum ada implementasi yang tercatat untuk hari ini</p></div>
           ) : (
-            <div className="implementations-list">
-              {filteredImplementations.map((implementation) => (
-                <div key={implementation.id} className="implementation-card">
-                  <div className="implementation-header">
-                    <div className="patient-info">
-                      <h4>{implementation.patient_name}</h4>
-                      <p>Waktu: {formatTime(implementation.implementation_time)}</p>
-                    </div>
-                    <div className="nurse-info">
-                      <span className="nurse-name">{implementation.nurse_name}</span>
-                    </div>
+            <div className="im-card-list">
+              {filteredCompleted.map(item => (
+                <div key={item.id} className="im-card im-card--completed">
+                  <div className="im-card-top">
+                    <div className="im-card-patient"><h4>{item.patient_name}</h4><p>Waktu: {formatTime(item.implementation_time)}</p></div>
+                    <span className="im-nurse-tag">{item.nurse_name}</span>
                   </div>
-
-                  <div className="implementation-content">
-                    <h5>{implementation.intervention}</h5>
-                    <div className="implementation-details">
-                      <div className="detail-section">
-                        <h6>Catatan Implementasi:</h6>
-                        <p>{implementation.implementation_note}</p>
-                      </div>
-                      
-                      <div className="detail-section">
-                        <h6>Respon Pasien:</h6>
-                        <p>{implementation.patient_response}</p>
-                      </div>
-
-                      <div className="vital-signs-summary">
-                        <h6>Tanda Vital:</h6>
-                        <div className="vital-signs-grid-small">
-                          <span>TD: {implementation.vital_signs.blood_pressure}</span>
-                          <span>Nadi: {implementation.vital_signs.pulse}</span>
-                          <span>Suhu: {implementation.vital_signs.temperature}°C</span>
-                          <span>RR: {implementation.vital_signs.respiration}</span>
-                          <span>SpO2: {implementation.vital_signs.oxygen_saturation}%</span>
+                  <div className="im-card-body">
+                    <h5>{item.intervention}</h5>
+                    <div className="im-details">
+                      <div className="im-detail-block"><h6>Catatan Implementasi</h6><p>{item.implementation_note}</p></div>
+                      <div className="im-detail-block"><h6>Respon Pasien</h6><p>{item.patient_response}</p></div>
+                      <div className="im-detail-block">
+                        <h6>Tanda Vital</h6>
+                        <div className="im-vitals-grid">
+                          <span>TD: {item.vital_signs.blood_pressure}</span>
+                          <span>Nadi: {item.vital_signs.pulse}</span>
+                          <span>Suhu: {item.vital_signs.temperature}&deg;C</span>
+                          <span>RR: {item.vital_signs.respiration}</span>
+                          <span>SpO2: {item.vital_signs.oxygen_saturation}%</span>
                         </div>
                       </div>
                     </div>
                   </div>
-
-                  <div className="implementation-actions">
-                    <button className="btn-secondary-small">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                      </svg>
-                      Print
-                    </button>
-                    <button className="btn-secondary-small">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                      </svg>
-                      Edit
-                    </button>
+                  <div className="im-card-actions">
+                    <button className="im-btn im-btn--outline" onClick={() => handlePrint(item)}>{icons.file} Print</button>
+                    <button className="im-btn im-btn--outline" onClick={() => handleDetail(item)}>{icons.edit} Detail</button>
                   </div>
                 </div>
               ))}
@@ -709,148 +266,77 @@ const Implementasi = () => {
         </div>
       )}
 
-      {/* Implementation Form Modal */}
-      {showImplementationForm && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
+      {showForm && (
+        <div className="im-overlay" onClick={() => setShowForm(false)}>
+          <div className="im-modal" onClick={e => e.stopPropagation()}>
+            <div className="im-modal-header">
               <h3>Form Implementasi Keperawatan</h3>
-              <button 
-                className="modal-close"
-                onClick={() => setShowImplementationForm(false)}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                </svg>
-              </button>
+              <button className="im-modal-close" onClick={() => setShowForm(false)}>{icons.x}</button>
             </div>
-
-            <div className="modal-body">
-              <div className="form-section">
-                <div className="form-group">
-                  <label>Waktu Implementasi</label>
-                  <input
-                    type="datetime-local"
-                    className="form-input"
-                    value={implementationData.implementation_time}
-                    onChange={(e) => handleInputChange('implementation_time', e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Catatan Implementasi *</label>
-                  <textarea
-                    className="form-textarea"
-                    rows="4"
-                    placeholder="Jelaskan secara detail bagaimana tindakan dilakukan..."
-                    value={implementationData.implementation_note}
-                    onChange={(e) => handleInputChange('implementation_note', e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Respon Pasien</label>
-                  <textarea
-                    className="form-textarea"
-                    rows="3"
-                    placeholder="Bagaimana respon pasien terhadap tindakan yang diberikan..."
-                    value={implementationData.patient_response}
-                    onChange={(e) => handleInputChange('patient_response', e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Tanda Vital</label>
-                  <div className="vital-signs-grid">
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="TD (mmHg)"
-                      value={implementationData.vital_signs.blood_pressure}
-                      onChange={(e) => handleInputChange('vital_signs.blood_pressure', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Nadi (x/mnt)"
-                      value={implementationData.vital_signs.pulse}
-                      onChange={(e) => handleInputChange('vital_signs.pulse', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="Suhu (°C)"
-                      value={implementationData.vital_signs.temperature}
-                      onChange={(e) => handleInputChange('vital_signs.temperature', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="RR (x/mnt)"
-                      value={implementationData.vital_signs.respiration}
-                      onChange={(e) => handleInputChange('vital_signs.respiration', e.target.value)}
-                    />
-                    <input
-                      type="text"
-                      className="form-input"
-                      placeholder="SpO2 (%)"
-                      value={implementationData.vital_signs.oxygen_saturation}
-                      onChange={(e) => handleInputChange('vital_signs.oxygen_saturation', e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Komplikasi (jika ada)</label>
-                  <textarea
-                    className="form-textarea"
-                    rows="2"
-                    placeholder="Catat jika ada komplikasi atau efek samping..."
-                    value={implementationData.complications}
-                    onChange={(e) => handleInputChange('complications', e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Tindakan Selanjutnya</label>
-                  <textarea
-                    className="form-textarea"
-                    rows="2"
-                    placeholder="Rencana tindakan atau observasi selanjutnya..."
-                    value={implementationData.next_action}
-                    onChange={(e) => handleInputChange('next_action', e.target.value)}
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Nama Perawat *</label>
-                  <input
-                    type="text"
-                    className="form-input"
-                    placeholder="Masukkan nama lengkap perawat"
-                    value={implementationData.nurse_name}
-                    onChange={(e) => handleInputChange('nurse_name', e.target.value)}
-                  />
+            <div className="im-modal-body">
+              <div className="im-form-group">
+                <label>Waktu Implementasi</label>
+                <input type="datetime-local" className="im-input" value={formData.implementation_time} onChange={e => handleInputChange('implementation_time', e.target.value)} />
+              </div>
+              <div className="im-form-group">
+                <label>Catatan Implementasi <span className="im-required">*</span></label>
+                <textarea className="im-textarea" rows="4" placeholder="Jelaskan secara detail bagaimana tindakan dilakukan..." value={formData.implementation_note} onChange={e => handleInputChange('implementation_note', e.target.value)} />
+              </div>
+              <div className="im-form-group">
+                <label>Respon Pasien</label>
+                <textarea className="im-textarea" rows="3" placeholder="Bagaimana respon pasien terhadap tindakan yang diberikan..." value={formData.patient_response} onChange={e => handleInputChange('patient_response', e.target.value)} />
+              </div>
+              <div className="im-form-group">
+                <label>Tanda Vital</label>
+                <div className="im-vital-form-grid">
+                  <input type="text" className="im-input" placeholder="TD (mmHg)" value={formData.vital_signs.blood_pressure} onChange={e => handleInputChange('vital_signs.blood_pressure', e.target.value)} />
+                  <input type="text" className="im-input" placeholder="Nadi (x/mnt)" value={formData.vital_signs.pulse} onChange={e => handleInputChange('vital_signs.pulse', e.target.value)} />
+                  <input type="text" className="im-input" placeholder="Suhu" value={formData.vital_signs.temperature} onChange={e => handleInputChange('vital_signs.temperature', e.target.value)} />
+                  <input type="text" className="im-input" placeholder="RR (x/mnt)" value={formData.vital_signs.respiration} onChange={e => handleInputChange('vital_signs.respiration', e.target.value)} />
+                  <input type="text" className="im-input" placeholder="SpO2 (%)" value={formData.vital_signs.oxygen_saturation} onChange={e => handleInputChange('vital_signs.oxygen_saturation', e.target.value)} />
                 </div>
               </div>
+              <div className="im-form-group">
+                <label>Komplikasi (jika ada)</label>
+                <textarea className="im-textarea" rows="2" placeholder="Catat jika ada komplikasi atau efek samping..." value={formData.complications} onChange={e => handleInputChange('complications', e.target.value)} />
+              </div>
+              <div className="im-form-group">
+                <label>Tindakan Selanjutnya</label>
+                <textarea className="im-textarea" rows="2" placeholder="Rencana tindakan atau observasi selanjutnya..." value={formData.next_action} onChange={e => handleInputChange('next_action', e.target.value)} />
+              </div>
+              <div className="im-form-group">
+                <label>Nama Perawat <span className="im-required">*</span></label>
+                <input type="text" className="im-input" placeholder="Masukkan nama lengkap perawat" value={formData.nurse_name} onChange={e => handleInputChange('nurse_name', e.target.value)} />
+              </div>
             </div>
+            <div className="im-modal-footer">
+              <button className="im-btn im-btn--outline" onClick={() => setShowForm(false)}>Batal</button>
+              <button className="im-btn im-btn--primary" onClick={saveImplementation} disabled={saving}>{icons.save} {saving ? 'Menyimpan...' : 'Simpan Implementasi'}</button>
+            </div>
+          </div>
+        </div>
+      )}
 
-            <div className="modal-footer">
-              <button 
-                className="btn-secondary"
-                onClick={() => setShowImplementationForm(false)}
-              >
-                Batal
-              </button>
-              <button 
-                className="btn-primary"
-                onClick={handleSaveImplementation}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17 3H5c-1.1 0-1.99.9-1.99 2L4 19c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V7h10v2z"/>
-                </svg>
-                Simpan Implementasi
-              </button>
+      {/* Detail Modal */}
+      {showDetailModal && detailData && (
+        <div className="im-overlay" onClick={() => setShowDetailModal(false)}>
+          <div className="im-modal" onClick={e => e.stopPropagation()}>
+            <div className="im-modal-header">
+              <h3>Detail - {detailData.patient_name}</h3>
+              <button className="im-modal-close" onClick={() => setShowDetailModal(false)}>{icons.x}</button>
+            </div>
+            <div className="im-modal-body">
+              <div className="im-form-group"><label>Intervensi</label><p style={{margin:0,padding:'8px 0',fontWeight:600}}>{detailData.intervention}</p></div>
+              {detailData.implementation_note && <div className="im-form-group"><label>Catatan Implementasi</label><p style={{margin:0,padding:'8px 0'}}>{detailData.implementation_note}</p></div>}
+              {detailData.patient_response && <div className="im-form-group"><label>Respon Pasien</label><p style={{margin:0,padding:'8px 0'}}>{detailData.patient_response}</p></div>}
+              {detailData.vital_signs && <div className="im-form-group"><label>Tanda Vital</label><div className="im-vitals-grid"><span>TD: {detailData.vital_signs.blood_pressure || '-'}</span><span>Nadi: {detailData.vital_signs.pulse || '-'}</span><span>Suhu: {detailData.vital_signs.temperature || '-'}&deg;C</span><span>RR: {detailData.vital_signs.respiration || '-'}</span><span>SpO2: {detailData.vital_signs.oxygen_saturation || '-'}%</span></div></div>}
+              {detailData.nurse_name && <div className="im-form-group"><label>Perawat</label><p style={{margin:0,padding:'8px 0'}}>{detailData.nurse_name}</p></div>}
+              {detailData.scheduled_time && <div className="im-form-group"><label>Jadwal</label><p style={{margin:0,padding:'8px 0'}}>{formatTime(detailData.scheduled_time)}</p></div>}
+              {detailData.priority && <div className="im-form-group"><label>Prioritas</label><p style={{margin:0,padding:'8px 0'}}>{detailData.priority}</p></div>}
+            </div>
+            <div className="im-modal-footer">
+              <button className="im-btn im-btn--outline" onClick={() => setShowDetailModal(false)}>Tutup</button>
+              {detailData.status === 'completed' && <button className="im-btn im-btn--primary" onClick={() => handlePrint(detailData)}>{icons.file} Print</button>}
             </div>
           </div>
         </div>

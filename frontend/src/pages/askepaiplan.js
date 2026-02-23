@@ -1,466 +1,313 @@
-import React, { useState } from 'react';
-import '../assets/Dashboard.css';
+import React, { useState, useEffect } from 'react';
 import '../assets/AskepAiPlan.css';
-import patients from '../data/patients';
+import { getPatients, generateAskepPlan, saveAskepPlan } from '../services/api';
 
 const AskepAiPlan = () => {
+  const [patients, setPatients] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState('');
-  const [assessmentData, setAssessmentData] = useState({
+  const [assessment, setAssessment] = useState({
     subjective: '',
     objective: '',
-    vital_signs: {
-      blood_pressure: '',
-      pulse: '',
-      temperature: '',
-      respiration: '',
-      oxygen_saturation: ''
-    }
+    vital: { bp: '', pulse: '', temp: '', resp: '', spo2: '' },
   });
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [generatedPlan, setGeneratedPlan] = useState(null);
-  const [activeTab, setActiveTab] = useState('assessment');
+  const [generating, setGenerating] = useState(false);
+  const [plan, setPlan] = useState(null);
+  const [tab, setTab] = useState('assessment');
+  const [savingPlan, setSavingPlan] = useState(false);
+  const [editingIntv, setEditingIntv] = useState(null);
+  const [editForm, setEditForm] = useState({ intervention: '', rationale: '', frequency: '' });
 
-  // Contoh rencana yang dihasilkan AI
-  const samplePlan = {
-    nursing_diagnoses: [
-      {
-        id: 1,
-        diagnosis: "Ketidakseimbangan nutrisi kurang dari kebutuhan tubuh",
-        related_to: "Gangguan metabolisme glukosa",
-        evidenced_by: "Kadar gula darah 250 mg/dL, penurunan berat badan 5 kg",
-        priority: "Tinggi"
-      },
-      {
-        id: 2,
-        diagnosis: "Risiko ketidakstabilan kadar glukosa darah",
-        related_to: "Kurangnya pengetahuan tentang manajemen diabetes",
-        evidenced_by: "Pasien belum pernah mendapat edukasi diabetes",
-        priority: "Sedang"
-      }
-    ],
-    interventions: [
-      {
-        id: 1,
-        diagnosis_id: 1,
-        intervention: "Monitor kadar glukosa darah",
-        rationale: "Untuk memantau efektivitas terapi dan mencegah komplikasi",
-        frequency: "Setiap 6 jam"
-      },
-      {
-        id: 2,
-        diagnosis_id: 1,
-        intervention: "Berikan diet sesuai program diabetes",
-        rationale: "Mengontrol asupan karbohidrat untuk stabilitas gula darah",
-        frequency: "Setiap makan"
-      },
-      {
-        id: 3,
-        diagnosis_id: 2,
-        intervention: "Berikan edukasi tentang manajemen diabetes",
-        rationale: "Meningkatkan pengetahuan pasien untuk self-care",
-        frequency: "Setiap hari"
-      }
-    ],
-    outcomes: [
-      {
-        id: 1,
-        diagnosis_id: 1,
-        outcome: "Kadar glukosa darah dalam rentang normal (80-140 mg/dL)",
-        indicators: ["Gula darah puasa < 126 mg/dL", "Gula darah 2 jam PP < 140 mg/dL"],
-        timeframe: "3 hari"
-      },
-      {
-        id: 2,
-        diagnosis_id: 2,
-        outcome: "Pasien mampu melakukan self-monitoring gula darah",
-        indicators: ["Dapat menggunakan glucometer", "Memahami jadwal pemeriksaan"],
-        timeframe: "5 hari"
-      }
-    ]
-  };
+  useEffect(() => {
+    getPatients().then(setPatients).catch(console.error);
+  }, []);
 
-  const handleInputChange = (field, value) => {
+  const patientData = patients.find((p) => p.id === selectedPatient);
+
+  /* helpers */
+  const set = (field, val) => {
     if (field.includes('.')) {
-      const [parent, child] = field.split('.');
-      setAssessmentData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
-      }));
+      const [p, c] = field.split('.');
+      setAssessment((prev) => ({ ...prev, [p]: { ...prev[p], [c]: val } }));
     } else {
-      setAssessmentData(prev => ({
-        ...prev,
-        [field]: value
-      }));
+      setAssessment((prev) => ({ ...prev, [field]: val }));
     }
   };
 
-  const handleGeneratePlan = async () => {
-    if (!selectedPatient || !assessmentData.subjective || !assessmentData.objective) {
-      alert('Mohon lengkapi data pasien dan assessment terlebih dahulu');
-      return;
-    }
+  const canGenerate = selectedPatient && assessment.subjective && assessment.objective;
 
-    setIsGenerating(true);
-    
-    // Simulasi proses AI (dalam implementasi nyata, ini akan memanggil API)
-    setTimeout(() => {
-      setGeneratedPlan(samplePlan);
-      setIsGenerating(false);
-      setActiveTab('plan');
-    }, 3000);
-  };
-
-  const handleSavePlan = () => {
-    if (generatedPlan) {
-      alert('Rencana asuhan keperawatan berhasil disimpan!');
-      // Logic untuk menyimpan ke database
+  const generate = async () => {
+    if (!canGenerate) { alert('Mohon lengkapi data pasien dan assessment terlebih dahulu'); return; }
+    setGenerating(true);
+    try {
+      const data = await generateAskepPlan(selectedPatient, assessment);
+      setPlan(data.plan);
+      setTab('plan');
+    } catch (err) {
+      alert(err.message || 'Gagal generate rencana');
+    } finally {
+      setGenerating(false);
     }
   };
 
-  const handleNewAssessment = () => {
+  const handleSavePlan = async () => {
+    if (!plan) return;
+    setSavingPlan(true);
+    try {
+      await saveAskepPlan(selectedPatient, assessment, plan);
+      alert('Rencana asuhan berhasil disimpan!');
+    } catch (err) {
+      alert(err.message || 'Gagal menyimpan rencana');
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const handleEditIntv = (intv) => {
+    setEditingIntv(intv.id);
+    setEditForm({ intervention: intv.intervention, rationale: intv.rationale, frequency: intv.frequency });
+  };
+
+  const handleSaveEditIntv = (intvId) => {
+    setPlan(prev => ({
+      ...prev,
+      interventions: prev.interventions.map(i => i.id === intvId ? { ...i, ...editForm } : i),
+    }));
+    setEditingIntv(null);
+  };
+
+  const reset = () => {
     setSelectedPatient('');
-    setAssessmentData({
-      subjective: '',
-      objective: '',
-      vital_signs: {
-        blood_pressure: '',
-        pulse: '',
-        temperature: '',
-        respiration: '',
-        oxygen_saturation: ''
-      }
-    });
-    setGeneratedPlan(null);
-    setActiveTab('assessment');
+    setAssessment({ subjective: '', objective: '', vital: { bp: '', pulse: '', temp: '', resp: '', spo2: '' } });
+    setPlan(null);
+    setTab('assessment');
   };
 
-  const selectedPatientData = patients.find(p => p.id === selectedPatient);
-
+  /* ---------- render ---------- */
   return (
-    <div className="dashboard-content">
-      <div className="page-header">
-        <div className="header-content">
-          <h1>Askep AI Plan</h1>
-          <p className="header-subtitle">Buat rencana asuhan keperawatan dengan bantuan Artificial Intelligence</p>
+    <div className="ak-page">
+
+      {/* title */}
+      <div className="ak-title-row">
+        <div>
+          <h2 className="ak-title">Askep AI Plan</h2>
+          <p className="ak-subtitle">Buat rencana asuhan keperawatan dengan bantuan Artificial Intelligence</p>
         </div>
-        <div className="header-actions">
-          <button className="btn-secondary" onClick={handleNewAssessment}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
+        <div className="ak-title-actions">
+          <button className="ak-btn ak-btn--outline" onClick={reset}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
             Assessment Baru
           </button>
-          {generatedPlan && (
-            <button className="btn-primary" onClick={handleSavePlan}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 3H5c-1.1 0-1.99.9-1.99 2L4 19c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V7h10v2z"/>
-              </svg>
-              Simpan Rencana
+          {plan && (
+            <button className="ak-btn ak-btn--primary" onClick={handleSavePlan} disabled={savingPlan}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+              {savingPlan ? 'Menyimpan...' : 'Simpan Rencana'}
             </button>
           )}
         </div>
       </div>
 
-      {/* AI Status Banner */}
-      <div className="ai-status-banner">
-        <div className="ai-status-content">
-          <div className="ai-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
+      {/* AI banner */}
+      <div className="ak-banner">
+        <div className="ak-banner-left">
+          <span className="ak-banner-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+          </span>
+          <div>
+            <h3 className="ak-banner-title">AI Assistant Ready</h3>
+            <p className="ak-banner-desc">Sistem AI siap membantu Anda membuat rencana asuhan keperawatan yang komprehensif dan evidence-based</p>
           </div>
-          <div className="ai-status-text">
-            <h3>AI Assistant Ready</h3>
-            <p>Sistem AI siap membantu Anda membuat rencana asuhan keperawatan yang komprehensif dan evidence-based</p>
-          </div>
-          <div className="ai-capabilities">
-            <span className="capability-tag">Diagnosis Keperawatan</span>
-            <span className="capability-tag">Intervensi</span>
-            <span className="capability-tag">Outcome</span>
-          </div>
+        </div>
+        <div className="ak-banner-tags">
+          <span className="ak-tag">Diagnosis Keperawatan</span>
+          <span className="ak-tag">Intervensi</span>
+          <span className="ak-tag">Outcome</span>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="tab-navigation">
-        <button 
-          className={`tab-button ${activeTab === 'assessment' ? 'active' : ''}`}
-          onClick={() => setActiveTab('assessment')}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 3H5c-1.1 0-1.99.9-1.99 2L4 19c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V7h10v2z"/>
-          </svg>
+      {/* tabs */}
+      <div className="ak-tabs">
+        <button className={`ak-tab ${tab === 'assessment' ? 'active' : ''}`} onClick={() => setTab('assessment')}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 12h6M9 16h6M9 8h6"/></svg>
           Assessment
         </button>
-        <button 
-          className={`tab-button ${activeTab === 'plan' ? 'active' : ''}`}
-          onClick={() => setActiveTab('plan')}
-          disabled={!generatedPlan}
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-          </svg>
+        <button className={`ak-tab ${tab === 'plan' ? 'active' : ''}`} onClick={() => setTab('plan')} disabled={!plan}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>
           Rencana AI
         </button>
       </div>
 
-      {/* Assessment Tab */}
-      {activeTab === 'assessment' && (
-        <div className="assessment-section">
-          {/* Patient Selection */}
-          <div className="form-section">
-            <h3 className="section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M16 8c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4zM12 14c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
-              </svg>
+      {/* ==================== ASSESSMENT TAB ==================== */}
+      {tab === 'assessment' && (
+        <div className="ak-form-stack">
+
+          {/* patient select */}
+          <section className="ak-card">
+            <h3 className="ak-card-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Pilih Pasien
             </h3>
-            <div className="form-group">
-              <select 
-                className="form-select"
-                value={selectedPatient}
-                onChange={(e) => setSelectedPatient(e.target.value)}
-              >
-                <option value="">-- Pilih Pasien --</option>
-                {patients.map(patient => (
-                  <option key={patient.id} value={patient.id}>
-                    {patient.name} ({patient.rm}) - {patient.diagnosis}
-                  </option>
-                ))}
-              </select>
-              {selectedPatientData && (
-                <div className="patient-info-card">
-                  <div className="patient-details">
-                    <h4>{selectedPatientData.name}</h4>
-                    <p>No. RM: {selectedPatientData.rm}</p>
-                    <p>Diagnosis Medis: {selectedPatientData.diagnosis}</p>
-                  </div>
+            <select className="ak-select" value={selectedPatient} onChange={(e) => setSelectedPatient(e.target.value)}>
+              <option value="">-- Pilih Pasien --</option>
+              {patients.map((p) => (
+                <option key={p.id} value={p.id}>{p.name} ({p.rm}) - {p.diagnosis}</option>
+              ))}
+            </select>
+            {patientData && (
+              <div className="ak-patient-preview">
+                <div className="ak-patient-avatar" style={{ background: '#2563eb' }}>{patientData.avatar}</div>
+                <div>
+                  <strong>{patientData.name}</strong>
+                  <span>RM: {patientData.rm}  |  {patientData.age} tahun  |  {patientData.gender}</span>
+                  <span>Diagnosis: {patientData.diagnosis}</span>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            )}
+          </section>
 
-          {/* Subjective Data */}
-          <div className="form-section">
-            <h3 className="section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 9H7v-2h6v2zm4-4H7V5h10v2z"/>
-              </svg>
+          {/* subjective */}
+          <section className="ak-card">
+            <h3 className="ak-card-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
               Data Subjektif
             </h3>
-            <div className="form-group">
-              <label>Keluhan Utama & Riwayat Penyakit</label>
-              <textarea
-                className="form-textarea"
-                rows="4"
-                placeholder="Masukkan keluhan pasien, riwayat penyakit, dan informasi subjektif lainnya..."
-                value={assessmentData.subjective}
-                onChange={(e) => handleInputChange('subjective', e.target.value)}
-              />
-            </div>
-          </div>
+            <label className="ak-label">Keluhan Utama & Riwayat Penyakit</label>
+            <textarea className="ak-textarea" rows="4" placeholder="Masukkan keluhan pasien, riwayat penyakit, dan informasi subjektif lainnya..." value={assessment.subjective} onChange={(e) => set('subjective', e.target.value)} />
+          </section>
 
-          {/* Objective Data */}
-          <div className="form-section">
-            <h3 className="section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
-              </svg>
+          {/* objective */}
+          <section className="ak-card">
+            <h3 className="ak-card-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
               Data Objektif
             </h3>
-            <div className="form-group">
-              <label>Temuan Pemeriksaan Fisik</label>
-              <textarea
-                className="form-textarea"
-                rows="4"
-                placeholder="Masukkan hasil pemeriksaan fisik dan temuan objektif lainnya..."
-                value={assessmentData.objective}
-                onChange={(e) => handleInputChange('objective', e.target.value)}
-              />
-            </div>
-            
-            {/* Vital Signs */}
-            <div className="vital-signs-grid">
-              <div className="form-group">
-                <label>Tekanan Darah</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="120/80 mmHg"
-                  value={assessmentData.vital_signs.blood_pressure}
-                  onChange={(e) => handleInputChange('vital_signs.blood_pressure', e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Nadi</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="80 x/menit"
-                  value={assessmentData.vital_signs.pulse}
-                  onChange={(e) => handleInputChange('vital_signs.pulse', e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Suhu</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="36.5°C"
-                  value={assessmentData.vital_signs.temperature}
-                  onChange={(e) => handleInputChange('vital_signs.temperature', e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Pernapasan</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="20 x/menit"
-                  value={assessmentData.vital_signs.respiration}
-                  onChange={(e) => handleInputChange('vital_signs.respiration', e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label>Saturasi O2</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="98%"
-                  value={assessmentData.vital_signs.oxygen_saturation}
-                  onChange={(e) => handleInputChange('vital_signs.oxygen_saturation', e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
+            <label className="ak-label">Temuan Pemeriksaan Fisik</label>
+            <textarea className="ak-textarea" rows="4" placeholder="Masukkan hasil pemeriksaan fisik dan temuan objektif lainnya..." value={assessment.objective} onChange={(e) => set('objective', e.target.value)} />
 
-          {/* Generate Button */}
-          <div className="generate-section">
-            <button 
-              className="btn-ai-generate"
-              onClick={handleGeneratePlan}
-              disabled={isGenerating || !selectedPatient || !assessmentData.subjective || !assessmentData.objective}
-            >
-              {isGenerating ? (
-                <>
-                  <div className="loading-spinner"></div>
-                  AI sedang menganalisis...
-                </>
+            <div className="ak-vital-grid">
+              {[
+                { key: 'vital.bp', label: 'Tekanan Darah', ph: '120/80 mmHg' },
+                { key: 'vital.pulse', label: 'Nadi', ph: '80 x/menit' },
+                { key: 'vital.temp', label: 'Suhu', ph: '36.5 C' },
+                { key: 'vital.resp', label: 'Pernapasan', ph: '20 x/menit' },
+                { key: 'vital.spo2', label: 'Saturasi O2', ph: '98%' },
+              ].map((v) => (
+                <div className="ak-vital-item" key={v.key}>
+                  <label className="ak-label">{v.label}</label>
+                  <input className="ak-input" type="text" placeholder={v.ph} value={assessment.vital[v.key.split('.')[1]]} onChange={(e) => set(v.key, e.target.value)} />
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* generate */}
+          <div className="ak-generate">
+            <button className="ak-btn-generate" onClick={generate} disabled={generating || !canGenerate}>
+              {generating ? (
+                <><span className="ak-spinner" /> AI sedang menganalisis...</>
               ) : (
                 <>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   Generate Rencana dengan AI
                 </>
               )}
             </button>
-            <p className="generate-note">
-              AI akan menganalisis data assessment dan membuat rencana asuhan keperawatan yang komprehensif
-            </p>
+            <p className="ak-generate-note">AI akan menganalisis data assessment dan membuat rencana asuhan keperawatan yang komprehensif</p>
           </div>
         </div>
       )}
 
-      {/* AI Generated Plan Tab */}
-      {activeTab === 'plan' && generatedPlan && (
-        <div className="plan-section">
-          <div className="plan-header">
-            <div className="plan-info">
-              <h3>Rencana Asuhan Keperawatan</h3>
-              <p>Pasien: {selectedPatientData?.name} ({selectedPatientData?.rm})</p>
-              <p>Dibuat dengan AI pada: {new Date().toLocaleDateString('id-ID')}</p>
+      {/* ==================== PLAN TAB ==================== */}
+      {tab === 'plan' && plan && (
+        <div className="ak-plan">
+
+          {/* plan header */}
+          <div className="ak-plan-header">
+            <div>
+              <h3 className="ak-plan-title">Rencana Asuhan Keperawatan</h3>
+              <p className="ak-plan-meta">Pasien: {patientData?.name} ({patientData?.rm})</p>
+              <p className="ak-plan-meta">Dibuat dengan AI pada: {new Date().toLocaleDateString('id-ID')}</p>
             </div>
-            <div className="ai-confidence">
-              <div className="confidence-score">
-                <span className="score">95%</span>
-                <span className="label">AI Confidence</span>
-              </div>
+            <div className="ak-confidence">
+              <span className="ak-confidence-val">95%</span>
+              <span className="ak-confidence-lbl">AI Confidence</span>
             </div>
           </div>
 
-          {/* Nursing Diagnoses */}
-          <div className="plan-section-content">
-            <h4 className="plan-section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 3H5c-1.1 0-1.99.9-1.99 2L4 19c0 1.1.89 2 2 2h10c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V7h10v2z"/>
-              </svg>
+          {/* diagnoses */}
+          <section className="ak-card">
+            <h4 className="ak-card-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
               Diagnosis Keperawatan
             </h4>
-            <div className="diagnoses-list">
-              {generatedPlan.nursing_diagnoses.map((diagnosis) => (
-                <div key={diagnosis.id} className="diagnosis-card">
-                  <div className="diagnosis-header">
-                    <h5>{diagnosis.diagnosis}</h5>
-                    <span className={`priority-badge ${diagnosis.priority.toLowerCase()}`}>
-                      {diagnosis.priority}
-                    </span>
+            <div className="ak-dx-list">
+              {plan.nursing_diagnoses.map((dx) => (
+                <div className="ak-dx" key={dx.id}>
+                  <div className="ak-dx-top">
+                    <h5 className="ak-dx-name">{dx.diagnosis}</h5>
+                    <span className={`ak-priority ak-priority--${dx.priority.toLowerCase()}`}>{dx.priority}</span>
                   </div>
-                  <div className="diagnosis-details">
-                    <p><strong>Berhubungan dengan:</strong> {diagnosis.related_to}</p>
-                    <p><strong>Ditandai dengan:</strong> {diagnosis.evidenced_by}</p>
-                  </div>
+                  <p className="ak-dx-detail"><strong>Berhubungan dengan:</strong> {dx.related_to}</p>
+                  <p className="ak-dx-detail"><strong>Ditandai dengan:</strong> {dx.evidenced_by}</p>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Interventions */}
-          <div className="plan-section-content">
-            <h4 className="plan-section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-              </svg>
+          {/* interventions */}
+          <section className="ak-card">
+            <h4 className="ak-card-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
               Intervensi Keperawatan
             </h4>
-            <div className="interventions-list">
-              {generatedPlan.interventions.map((intervention) => (
-                <div key={intervention.id} className="intervention-card">
-                  <div className="intervention-content">
-                    <h6>{intervention.intervention}</h6>
-                    <p className="rationale"><strong>Rasional:</strong> {intervention.rationale}</p>
-                    <div className="intervention-meta">
-                      <span className="frequency">Frekuensi: {intervention.frequency}</span>
+            <div className="ak-int-list">
+              {plan.interventions.map((i) => (
+                <div className="ak-int" key={i.id}>
+                  {editingIntv === i.id ? (
+                    <div className="ak-int-body">
+                      <input className="ak-input" value={editForm.intervention} onChange={e => setEditForm(f => ({...f, intervention: e.target.value}))} placeholder="Intervensi" style={{marginBottom:6}} />
+                      <input className="ak-input" value={editForm.rationale} onChange={e => setEditForm(f => ({...f, rationale: e.target.value}))} placeholder="Rasional" style={{marginBottom:6}} />
+                      <input className="ak-input" value={editForm.frequency} onChange={e => setEditForm(f => ({...f, frequency: e.target.value}))} placeholder="Frekuensi" style={{marginBottom:6}} />
+                      <div style={{display:'flex',gap:6}}>
+                        <button className="ak-btn-sm" onClick={() => handleSaveEditIntv(i.id)} style={{background:'#10b981',color:'#fff'}}>Simpan</button>
+                        <button className="ak-btn-sm" onClick={() => setEditingIntv(null)}>Batal</button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="intervention-actions">
-                    <button className="btn-small">Edit</button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="ak-int-body">
+                        <h6 className="ak-int-name">{i.intervention}</h6>
+                        <p className="ak-int-rationale"><strong>Rasional:</strong> {i.rationale}</p>
+                        <span className="ak-freq">{i.frequency}</span>
+                      </div>
+                      <button className="ak-btn-sm" onClick={() => handleEditIntv(i)}>Edit</button>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
-          {/* Outcomes */}
-          <div className="plan-section-content">
-            <h4 className="plan-section-title">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l3.09 6.26L22 9l-5.91 5.74L18 22l-6-3.15L6 22l1.91-7.26L2 9l6.91-1.74L12 2z"/>
-              </svg>
+          {/* outcomes */}
+          <section className="ak-card">
+            <h4 className="ak-card-heading">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
               Kriteria Hasil (NOC)
             </h4>
-            <div className="outcomes-list">
-              {generatedPlan.outcomes.map((outcome) => (
-                <div key={outcome.id} className="outcome-card">
-                  <div className="outcome-header">
-                    <h6>{outcome.outcome}</h6>
-                    <span className="timeframe">Target: {outcome.timeframe}</span>
+            <div className="ak-out-list">
+              {plan.outcomes.map((o) => (
+                <div className="ak-out" key={o.id}>
+                  <div className="ak-out-top">
+                    <h6 className="ak-out-name">{o.outcome}</h6>
+                    <span className="ak-timeframe">Target: {o.timeframe}</span>
                   </div>
-                  <div className="outcome-indicators">
-                    <p><strong>Indikator:</strong></p>
-                    <ul>
-                      {outcome.indicators.map((indicator, index) => (
-                        <li key={index}>{indicator}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <p className="ak-out-lbl"><strong>Indikator:</strong></p>
+                  <ul className="ak-out-indicators">
+                    {o.indicators.map((ind, idx) => <li key={idx}>{ind}</li>)}
+                  </ul>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
         </div>
       )}
     </div>

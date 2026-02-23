@@ -1,343 +1,238 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import '../assets/Dashboard.css';
 import '../assets/Patients.css';
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 import Pasien from './pasien';
 import AskepAiPlan from './askepaiplan';
 import Implementasi from './implementasi';
 import Profile from './Profile';
 import Evaluasi from './evaluasi';
 import Laporan from './laporan';
+import { getDashboardStats, getDashboardActivities } from '../services/api';
+
+const defaultStatsData = [
+  {
+    title: 'Total Pasien',
+    value: '...',
+    desc: 'Pasien terdaftar',
+    trend: '-',
+    trendType: 'neutral',
+    color: '#10b981',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M16 21v-2a4 4 0 00-4-4H8a4 4 0 00-4-4v2" />
+        <circle cx="10" cy="7" r="4" />
+        <path d="M20 8v6M23 11h-6" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Askep Aktif',
+    value: '...',
+    desc: 'Rencana sedang berjalan',
+    trend: '-',
+    trendType: 'neutral',
+    color: '#3b82f6',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+        <rect x="9" y="3" width="6" height="4" rx="1" />
+        <path d="M9 14l2 2 4-4" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Implementasi',
+    value: '...',
+    desc: 'Tindakan selesai',
+    trend: '-',
+    trendType: 'neutral',
+    color: '#f59e0b',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="9 11 12 14 22 4" />
+        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Laporan',
+    value: '...',
+    desc: 'Laporan tersedia',
+    trend: '-',
+    trendType: 'neutral',
+    color: '#8b5cf6',
+    icon: (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+      </svg>
+    ),
+  },
+];
 
 const Dashboard = ({ user, onLogout }) => {
   const [activeMenu, setActiveMenu] = useState('dashboard');
 
-  const menuItems = [
-    {
-      id: 'profile',
-      label: 'Profil Pengguna',
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <circle cx="12" cy="8" r="4" />
-          <path d="M4 20c0-4 8-4 8-4s8 0 8 4v2H4v-2z" />
-        </svg>
-      )
-    },
-    { 
-      id: 'dashboard', 
-      label: 'Dashboard', 
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
-        </svg>
-      )
-    },
-    { 
-      id: 'pasien', 
-      label: 'Pasien', 
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M16 8c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4zM12 14c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
-        </svg>
-      )
-    },
-    { 
-      id: 'askep', 
-      label: 'Askep AI Plan', 
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-        </svg>
-      )
-    },
-    { 
-      id: 'implementasi', 
-      label: 'Implementasi', 
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
-        </svg>
-      )
-    },
-    { 
-      id: 'evaluasi', 
-      label: 'Evaluasi', 
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-        </svg>
-      )
-    },
-    { 
-      id: 'laporan', 
-      label: 'Laporan', 
-      icon: (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-        </svg>
-      )
-    },
-  ];
-
   const renderContent = () => {
-  switch (activeMenu) {
+    switch (activeMenu) {
       case 'profile':
         return <Profile user={user} />;
-      case 'dashboard':
-        return (
-          <div className="dashboard-content">
-            {/* Redesigned Header */}
-            <div className="dashboard-header-gradient">
-              <div className="dashboard-header-inner">
-                <div className="dashboard-header-left">
-                  <div className="dashboard-header-logo">
-                    <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="24" cy="24" r="22" stroke="#fff" strokeWidth="3" fill="#2563eb"/>
-                      <path d="M24 14V34M14 24H34" stroke="#fff" strokeWidth="3.5" strokeLinecap="round"/>
-                      <circle cx="24" cy="24" r="6" fill="#fff" opacity="0.18"/>
-                    </svg>
-                  </div>
-                  <div className="dashboard-header-greeting">
-                    <h1>Selamat Datang, <span className="username-highlight">{user.username}</span></h1>
-                    <p className="dashboard-header-role">Peran: <span className="role-badge">{user.role}</span></p>
-                    <p className="dashboard-header-desc">Sistem Askep AI membantu Anda mengelola asuhan keperawatan secara profesional dan efisien.</p>
-                  </div>
-                </div>
-                <div className="dashboard-header-illustration">
-                  {/* Modern Health/AI SVG Illustration */}
-                  <svg width="140" height="120" viewBox="0 0 140 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="70" cy="110" rx="60" ry="10" fill="#3b82f6" opacity="0.12"/>
-                    <rect x="40" y="30" width="60" height="50" rx="12" fill="#fff" stroke="#2563eb" strokeWidth="2.5"/>
-                    <rect x="55" y="45" width="30" height="20" rx="5" fill="#60a5fa" opacity="0.18"/>
-                    <path d="M50 55 Q60 35 70 55 Q80 75 90 55" stroke="#2563eb" strokeWidth="2.5" fill="none"/>
-                    <circle cx="70" cy="55" r="4" fill="#2563eb"/>
-                    <circle cx="55" cy="45" r="2.5" fill="#60a5fa"/>
-                    <circle cx="85" cy="65" r="2.5" fill="#60a5fa"/>
-                  </svg>
-                </div>
-              </div>
-            </div>
-            {/* End Redesigned Header */}
-
-            <div className="stats-section">
-              <h3 className="section-title">Ringkasan Aktivitas</h3>
-              <div className="stats-grid">
-                <div className="stat-card">
-                  <div className="stat-header">
-                    <div className="stat-icon patients">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M16 8c0 2.21-1.79 4-4 4s-4-1.79-4-4 1.79-4 4-4 4 1.79 4 4zM12 14c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
-                      </svg>
-                    </div>
-                    <div className="stat-trend positive">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7 14l5-5 5 5z"/>
-                      </svg>
-                      +12%
-                    </div>
-                  </div>
-                  <div className="stat-content">
-                    <h3>Total Pasien</h3>
-                    <p className="stat-number">246</p>
-                    <p className="stat-description">Pasien terdaftar bulan ini</p>
-                  </div>
-                </div>
-                
-                <div className="stat-card">
-                  <div className="stat-header">
-                    <div className="stat-icon askep">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                      </svg>
-                    </div>
-                    <div className="stat-trend positive">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7 14l5-5 5 5z"/>
-                      </svg>
-                      +8%
-                    </div>
-                  </div>
-                  <div className="stat-content">
-                    <h3>Askep Aktif</h3>
-                    <p className="stat-number">89</p>
-                    <p className="stat-description">Rencana yang sedang berjalan</p>
-                  </div>
-                </div>
-                
-                <div className="stat-card">
-                  <div className="stat-header">
-                    <div className="stat-icon implementation">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                      </svg>
-                    </div>
-                    <div className="stat-trend positive">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M7 14l5-5 5 5z"/>
-                      </svg>
-                      +15%
-                    </div>
-                  </div>
-                  <div className="stat-content">
-                    <h3>Implementasi</h3>
-                    <p className="stat-number">156</p>
-                    <p className="stat-description">Tindakan selesai hari ini</p>
-                  </div>
-                </div>
-                
-                <div className="stat-card">
-                  <div className="stat-header">
-                    <div className="stat-icon reports">
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 2 2h8c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-                      </svg>
-                    </div>
-                    <div className="stat-trend neutral">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M8 12l4-4 4 4z"/>
-                      </svg>
-                      0%
-                    </div>
-                  </div>
-                  <div className="stat-content">
-                    <h3>Laporan</h3>
-                    <p className="stat-number">42</p>
-                    <p className="stat-description">Laporan dibuat minggu ini</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="activity-section">
-              <div className="section-header">
-                <h3 className="section-title">Aktivitas Terbaru</h3>
-                <button className="btn-secondary">Lihat Semua</button>
-              </div>
-              <div className="activity-grid">
-                <div className="activity-card">
-                  <div className="activity-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                    </svg>
-                  </div>
-                  <div className="activity-content">
-                    <h4>Pasien Baru Ditambahkan</h4>
-                    <p>Ahmad Wijaya telah didaftarkan ke sistem</p>
-                    <span className="activity-time">2 menit yang lalu</span>
-                  </div>
-                </div>
-                
-                <div className="activity-card">
-                  <div className="activity-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                    </svg>
-                  </div>
-                  <div className="activity-content">
-                    <h4>Askep AI Plan Dibuat</h4>
-                    <p>Rencana asuhan untuk Siti Aminah selesai dianalisis AI</p>
-                    <span className="activity-time">15 menit yang lalu</span>
-                  </div>
-                </div>
-                
-                <div className="activity-card">
-                  <div className="activity-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                    </svg>
-                  </div>
-                  <div className="activity-content">
-                    <h4>Implementasi Selesai</h4>
-                    <p>Tindakan keperawatan Budi Santoso telah diselesaikan</p>
-                    <span className="activity-time">1 jam yang lalu</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
       case 'pasien':
-        return <Pasien />;
+        return <Pasien onNavigate={setActiveMenu} />;
       case 'askep':
         return <AskepAiPlan />;
       case 'implementasi':
         return <Implementasi />;
       case 'evaluasi':
-  return <Evaluasi />;
+        return <Evaluasi />;
       case 'laporan':
-  return <Laporan />;
+        return <Laporan />;
+      case 'dashboard':
       default:
-        return (
-          <div className="dashboard-content">
-            <h1>Dashboard</h1>
-            <p>Pilih menu di sidebar untuk mulai bekerja.</p>
-          </div>
-        );
+        return <DashboardHome user={user} />;
     }
   };
 
   return (
-    <div className="dashboard-container">
-      {/* Sidebar */}
-      <div className="sidebar">
-        <div className="sidebar-header">
-          <div className="logo">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2" fill="none"/>
-              <path d="M12 8V16M8 12H16" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-              <circle cx="12" cy="12" r="3" fill="white" opacity="0.3"/>
-            </svg>
-          </div>
-          <div className="brand-text">
-            <h3>Sistem Askep</h3>
-            <p>Healthcare Platform</p>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <button
-              key={item.id}
-              className={`nav-item ${activeMenu === item.id ? 'active' : ''}`}
-              onClick={() => setActiveMenu(item.id)}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-label">{item.label}</span>
-              {activeMenu === item.id && <div className="active-indicator"></div>}
-            </button>
-          ))}
-          
-          <div className="nav-divider"></div>
-          
-          <button className="nav-item logout-btn" onClick={onLogout}>
-            <span className="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.59L17 17l5-5z"/>
-                <path d="M4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/>
-              </svg>
-            </span>
-            <span className="nav-label">Logout</span>
-          </button>
-        </nav>
-        
-        <div className="sidebar-footer">
-          <div className="user-profile">
-            <div className="user-avatar">
-              {user.username.charAt(0).toUpperCase()}
-            </div>
-            <div className="user-info">
-              <p className="user-name">{user.username}</p>
-              <p className="user-role">{user.role}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="main-content">
-        <div className="content-wrapper">
+    <div className="app-layout">
+      <Sidebar
+        activeMenu={activeMenu}
+        setActiveMenu={setActiveMenu}
+        user={user}
+        onLogout={onLogout}
+      />
+      <div className="app-main">
+        <Header
+          title={activeMenu === 'dashboard' ? `Selamat Datang, ${user.username}` : getPageTitle(activeMenu)}
+          subtitle={activeMenu === 'dashboard' ? 'Kelola asuhan keperawatan secara efisien' : undefined}
+          user={user}
+        />
+        <main className="app-content">
           {renderContent()}
+        </main>
+        <Footer />
+      </div>
+    </div>
+  );
+};
+
+function getPageTitle(menuId) {
+  const titles = {
+    profile: 'Profil Pengguna',
+    pasien: 'Data Pasien',
+    askep: 'Askep AI Plan',
+    implementasi: 'Implementasi',
+    evaluasi: 'Evaluasi',
+    laporan: 'Laporan',
+  };
+  return titles[menuId] || 'Dashboard';
+}
+
+const DashboardHome = ({ user }) => {
+  const [statsData, setStatsData] = useState(defaultStatsData);
+  const [recentActivities, setRecentActivities] = useState([]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const colorMap = useMemo(() => ({ 'Total Pasien': '#10b981', 'Askep Aktif': '#3b82f6', 'Implementasi': '#f59e0b', 'Laporan': '#8b5cf6' }), []);
+
+  const fetchDashboard = useCallback(async () => {
+    try {
+      const [statsRes, activitiesRes] = await Promise.all([
+        getDashboardStats(),
+        getDashboardActivities()
+      ]);
+      const stats = statsRes?.stats || statsRes || [];
+      const activities = Array.isArray(activitiesRes) ? activitiesRes : [];
+      if (stats.length) {
+        setStatsData(prev => prev.map(s => {
+          const apiStat = stats.find(a => a.title === s.title);
+          if (apiStat) return { ...s, value: String(apiStat.value), desc: apiStat.desc || s.desc, trend: apiStat.trend || '-', trendType: apiStat.trendType || 'neutral' };
+          return s;
+        }));
+      }
+      if (activities.length) {
+        setRecentActivities(activities.map(a => ({
+          ...a,
+          time: a.timeAgo || a.time,
+          color: a.color || colorMap[a.title] || '#3b82f6',
+        })));
+      }
+    } catch (e) {
+      console.error('Dashboard fetch error:', e);
+    }
+  }, [colorMap]);
+
+  useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
+
+  return (
+    <div className="dash-home">
+      {/* Welcome banner */}
+      <div className="dash-welcome">
+        <div className="dash-welcome-text">
+          <h2>
+            Halo, <strong>{user.username}</strong>
+          </h2>
+          <p>
+            Peran: <span className="dash-role-badge">{user.role}</span>
+          </p>
+          <p className="dash-welcome-desc">
+            Sistem Askep AI membantu Anda mengelola asuhan keperawatan secara profesional dan efisien. Pantau pasien, buat rencana, dan evaluasi dari satu tempat.
+          </p>
+        </div>
+        <div className="dash-welcome-art">
+          <svg width="120" height="100" viewBox="0 0 120 100" fill="none">
+            <rect x="20" y="15" width="80" height="55" rx="10" fill="#fff" fillOpacity="0.15" />
+            <path d="M35 50Q50 25 60 50Q70 75 85 50" stroke="#fff" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+            <circle cx="60" cy="50" r="5" fill="#fff" fillOpacity="0.4" />
+            <circle cx="42" cy="38" r="3" fill="#fff" fillOpacity="0.25" />
+            <circle cx="78" cy="62" r="3" fill="#fff" fillOpacity="0.25" />
+          </svg>
         </div>
       </div>
+
+      {/* Stats grid */}
+      <section className="dash-stats">
+        <h3 className="dash-section-title">Ringkasan Aktivitas</h3>
+        <div className="dash-stats-grid">
+          {statsData.map((s) => (
+            <div className="dash-stat-card" key={s.title}>
+              <div className="dash-stat-top">
+                <div className="dash-stat-icon" style={{ background: s.color }}>
+                  {s.icon}
+                </div>
+                <span className={`dash-stat-trend ${s.trendType}`}>{s.trend}</span>
+              </div>
+              <h4 className="dash-stat-label">{s.title}</h4>
+              <p className="dash-stat-value">{s.value}</p>
+              <p className="dash-stat-desc">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Recent activity */}
+      <section className="dash-activity">
+        <div className="dash-activity-header">
+          <h3 className="dash-section-title">Aktivitas Terbaru</h3>
+        </div>
+        <div className="dash-activity-list">
+          {recentActivities.map((a, i) => (
+            <div className="dash-activity-item" key={i}>
+              <div className="dash-activity-dot" style={{ background: a.color }} />
+              <div className="dash-activity-body">
+                <h4>{a.title}</h4>
+                <p>{a.desc}</p>
+                <span className="dash-activity-time">{a.time}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };

@@ -5,12 +5,19 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/login';
 import Regis from './pages/regis';
 import Dashboard from './pages/dashboard';
+import { getStoredUser, removeToken, removeStoredUser } from './services/api';
 
 function App() {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(getStoredUser());
 
   const handleLogout = () => {
+    removeToken();
+    removeStoredUser();
     setUser(null);
+  };
+
+  const handleLogin = (userData) => {
+    setUser(userData);
   };
 
   const handleRegister = (userData) => {
@@ -22,7 +29,7 @@ function App() {
       <Routes>
         <Route path="/regis" element={user ? <Navigate to="/" replace /> : <Regis onRegister={handleRegister} />} />
         <Route path="/" element={
-          !user ? <Login onLogin={setUser} /> : <Dashboard user={user} onLogout={handleLogout} />
+          !user ? <Login onLogin={handleLogin} /> : <Dashboard user={user} onLogout={handleLogout} />
         } />
       </Routes>
     </BrowserRouter>

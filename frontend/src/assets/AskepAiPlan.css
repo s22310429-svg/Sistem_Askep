@@ -1,579 +1,660 @@
-/* Askep AI Plan Styles */
+/* =============================================
+   ASKEP AI PLAN  (.ak-*)
+   ============================================= */
 
-/* AI Status Banner */
-.ai-status-banner {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  color: white;
-}
-
-.ai-status-content {
+.ak-page {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 1.5rem;
 }
 
-.ai-icon {
-  background: rgba(255, 255, 255, 0.2);
+/* ---------- Title row ---------- */
+.ak-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ak-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.ak-subtitle {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin: 4px 0 0;
+}
+
+.ak-title-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* buttons */
+.ak-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.ak-btn--outline {
+  background: #fff;
+  color: #1e293b;
+  border: 1.5px solid #1e293b;
+}
+
+.ak-btn--outline:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+.ak-btn--primary {
+  background: #2563eb;
+  color: #fff;
+  border: 1.5px solid #2563eb;
+}
+
+.ak-btn--primary:hover {
+  background: #1d4ed8;
+}
+
+/* ---------- AI Banner ---------- */
+.ak-banner {
+  background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  color: #fff;
+}
+
+.ak-banner-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ak-banner-icon {
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  padding: 12px;
+  background: rgba(255, 255, 255, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-.ai-status-text h3 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+.ak-banner-title {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 
-.ai-status-text p {
+.ak-banner-desc {
   margin: 0;
-  opacity: 0.9;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
+  opacity: 0.85;
+  line-height: 1.4;
 }
 
-.ai-capabilities {
+.ak-banner-tags {
   display: flex;
   gap: 0.5rem;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 
-.capability-tag {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1rem;
+.ak-tag {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 0.45rem 0.9rem;
   border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-/* Tab Navigation */
-.tab-navigation {
+/* ---------- Tabs ---------- */
+.ak-tabs {
   display: flex;
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 4px;
-  margin-bottom: 2rem;
-  gap: 4px;
+  gap: 0;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
 }
 
-.tab-button {
-  display: flex;
+.ak-tab {
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
+  flex: 0 0 auto;
   padding: 0.75rem 1.5rem;
+  background: none;
   border: none;
-  background: transparent;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
+  font-size: 0.88rem;
   font-weight: 500;
   color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 2px solid transparent;
 }
 
-.tab-button:hover:not(:disabled) {
-  background: #e2e8f0;
-  color: #334155;
+.ak-tab:hover:not(:disabled) {
+  color: #1e293b;
+  background: #f8fafc;
 }
 
-.tab-button.active {
-  background: white;
-  color: #1e40af;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+.ak-tab.active {
+  color: #2563eb;
+  font-weight: 600;
+  border-bottom-color: #2563eb;
+  background: #f0f5ff;
 }
 
-.tab-button:disabled {
-  opacity: 0.5;
+.ak-tab:disabled {
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
-/* Assessment Section */
-.assessment-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.form-section {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
+/* ---------- Card (shared) ---------- */
+.ak-card {
+  background: #fff;
   border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
 }
 
-.section-title {
+.ak-card-heading {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 1.25rem;
 }
 
-.section-title svg {
+.ak-card-heading svg {
   color: #3b82f6;
+  flex-shrink: 0;
 }
 
-.form-group {
-  margin-bottom: 1.5rem;
+/* ---------- Assessment form ---------- */
+.ak-form-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
-.form-group:last-child {
-  margin-bottom: 0;
-}
-
-.form-group label {
+.ak-label {
   display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: #374151;
+  margin-bottom: 0.4rem;
 }
 
-.form-input, .form-select, .form-textarea {
+.ak-select,
+.ak-input,
+.ak-textarea {
   width: 100%;
-  padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1e293b;
+  background: #f8fafc;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
 }
 
-.form-input:focus, .form-select:focus, .form-textarea:focus {
+.ak-select:focus,
+.ak-input:focus,
+.ak-textarea:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  background: #fff;
 }
 
-.form-textarea {
+.ak-textarea {
   resize: vertical;
   min-height: 100px;
 }
 
-/* Patient Info Card */
-.patient-info-card {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 0.5rem;
+/* patient preview */
+.ak-patient-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  margin-top: 0.75rem;
+  padding: 0.85rem 1rem;
+  background: #f0f5ff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
 }
 
-.patient-details h4 {
-  margin: 0 0 0.5rem 0;
-  color: #1e293b;
-  font-weight: 600;
+.ak-patient-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
-.patient-details p {
-  margin: 0.25rem 0;
+.ak-patient-preview strong {
+  display: block;
+  font-size: 0.95rem;
+  color: #0f172a;
+}
+
+.ak-patient-preview span {
+  display: block;
+  font-size: 0.82rem;
   color: #64748b;
-  font-size: 0.9rem;
 }
 
-/* Vital Signs Grid */
-.vital-signs-grid {
+/* vital grid */
+.ak-vital-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
 }
 
-/* Generate Section */
-.generate-section {
+.ak-vital-item {
+  /* just a wrapper */
+}
+
+/* ---------- Generate section ---------- */
+.ak-generate {
   text-align: center;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  background: #f8fafc;
   border: 2px dashed #cbd5e1;
+  border-radius: 14px;
 }
 
-.btn-ai-generate {
+.ak-btn-generate {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 2rem;
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
-  color: white;
+  gap: 0.65rem;
+  padding: 0.85rem 2rem;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: #fff;
   border: none;
   border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-width: 250px;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.btn-ai-generate:hover:not(:disabled) {
+.ak-btn-generate:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
 }
 
-.btn-ai-generate:disabled {
-  opacity: 0.6;
+.ak-btn-generate:disabled {
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
 }
 
-.generate-note {
-  margin: 1rem 0 0 0;
-  color: #64748b;
-  font-size: 0.9rem;
-}
-
-/* Loading Spinner */
-.loading-spinner {
-  width: 20px;
-  height: 20px;
+.ak-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top: 2px solid white;
+  border-top-color: #fff;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: ak-spin 0.7s linear infinite;
 }
 
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes ak-spin {
+  to { transform: rotate(360deg); }
 }
 
-/* Plan Section */
-.plan-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.plan-header {
-  display: flex;
-  justify-content: between;
-  align-items: flex-start;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-}
-
-.plan-info h3 {
-  margin: 0 0 0.5rem 0;
-  color: #1e293b;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.plan-info p {
-  margin: 0.25rem 0;
+.ak-generate-note {
+  margin: 0.85rem 0 0;
+  font-size: 0.85rem;
   color: #64748b;
-  font-size: 0.9rem;
 }
 
-.ai-confidence {
-  margin-left: auto;
-}
-
-.confidence-score {
-  text-align: center;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-  color: white;
-  border-radius: 8px;
-}
-
-.confidence-score .score {
-  display: block;
-  font-size: 1.5rem;
-  font-weight: 700;
-}
-
-.confidence-score .label {
-  display: block;
-  font-size: 0.75rem;
-  opacity: 0.9;
-}
-
-/* Plan Section Content */
-.plan-section-content {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.plan-section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #1e293b;
-  padding-bottom: 0.75rem;
-  border-bottom: 2px solid #f1f5f9;
-}
-
-.plan-section-title svg {
-  color: #3b82f6;
-}
-
-/* Diagnosis Cards */
-.diagnoses-list {
+/* ==================== PLAN TAB ==================== */
+.ak-plan {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.25rem;
 }
 
-.diagnosis-card {
-  padding: 1.25rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: #fafbfc;
-}
-
-.diagnosis-header {
+/* plan header */
+.ak-plan-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
 }
 
-.diagnosis-header h5 {
+.ak-plan-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0 0 4px;
+}
+
+.ak-plan-meta {
+  font-size: 0.85rem;
+  color: #64748b;
+  margin: 2px 0;
+}
+
+.ak-confidence {
+  text-align: center;
+  padding: 0.65rem 1rem;
+  background: linear-gradient(135deg, #10b981, #34d399);
+  border-radius: 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.ak-confidence-val {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 800;
+}
+
+.ak-confidence-lbl {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.85;
+  letter-spacing: 0.3px;
+}
+
+/* ---------- Diagnosis cards ---------- */
+.ak-dx-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ak-dx {
+  padding: 1.15rem 1.25rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fafbfc;
+}
+
+.ak-dx-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
+}
+
+.ak-dx-name {
   margin: 0;
-  color: #1e293b;
-  font-size: 1rem;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0f172a;
   flex: 1;
 }
 
-.priority-badge {
-  padding: 0.25rem 0.75rem;
+.ak-priority {
+  padding: 0.2rem 0.7rem;
   border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.025em;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
 }
 
-.priority-badge.tinggi {
+.ak-priority--tinggi {
   background: #fef2f2;
   color: #dc2626;
   border: 1px solid #fecaca;
 }
 
-.priority-badge.sedang {
-  background: #fefbf2;
+.ak-priority--sedang {
+  background: #fffbeb;
   color: #d97706;
   border: 1px solid #fed7aa;
 }
 
-.priority-badge.rendah {
+.ak-priority--rendah {
   background: #f0fdf4;
   color: #059669;
   border: 1px solid #bbf7d0;
 }
 
-.diagnosis-details p {
-  margin: 0.5rem 0;
-  color: #4b5563;
-  font-size: 0.9rem;
-  line-height: 1.5;
+.ak-dx-detail {
+  margin: 0.3rem 0;
+  font-size: 0.88rem;
+  color: #475569;
+  line-height: 1.45;
 }
 
-/* Intervention Cards */
-.interventions-list {
+/* ---------- Intervention cards ---------- */
+.ak-int-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.intervention-card {
+.ak-int {
   display: flex;
-  justify-content: space-between;
   align-items: flex-start;
-  padding: 1.25rem;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fafbfc;
 }
 
-.intervention-content {
+.ak-int-body {
   flex: 1;
 }
 
-.intervention-content h6 {
-  margin: 0 0 0.75rem 0;
-  color: #1e293b;
+.ak-int-name {
+  margin: 0 0 0.4rem;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: #0f172a;
 }
 
-.rationale {
-  margin: 0.5rem 0;
-  color: #4b5563;
+.ak-int-rationale {
+  margin: 0 0 0.5rem;
   font-size: 0.85rem;
+  color: #475569;
   line-height: 1.4;
 }
 
-.intervention-meta {
-  margin-top: 0.75rem;
-}
-
-.frequency {
+.ak-freq {
   display: inline-block;
-  padding: 0.25rem 0.75rem;
-  background: #e0f2fe;
-  color: #0369a1;
+  padding: 0.2rem 0.7rem;
+  background: #dbeafe;
+  color: #1d4ed8;
   border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 
-.intervention-actions {
-  margin-left: 1rem;
-}
-
-.btn-small {
-  padding: 0.5rem 1rem;
+.ak-btn-sm {
+  padding: 0.4rem 0.9rem;
   font-size: 0.8rem;
-  border: 1px solid #d1d5db;
-  background: white;
+  font-weight: 500;
+  border: 1.5px solid #d1d5db;
+  background: #fff;
   color: #374151;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.btn-small:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
+.ak-btn-sm:hover {
+  border-color: #3b82f6;
+  color: #3b82f6;
 }
 
-/* Outcome Cards */
-.outcomes-list {
+/* ---------- Outcome cards ---------- */
+.ak-out-list {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
-.outcome-card {
-  padding: 1.25rem;
+.ak-out {
+  padding: 1.15rem 1.25rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fafbfc;
 }
 
-.outcome-header {
+.ak-out-top {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 0.65rem;
 }
 
-.outcome-header h6 {
+.ak-out-name {
   margin: 0;
-  color: #1e293b;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
+  color: #0f172a;
   flex: 1;
 }
 
-.timeframe {
-  padding: 0.25rem 0.75rem;
+.ak-timeframe {
+  padding: 0.2rem 0.7rem;
   background: #f0f9ff;
   color: #0369a1;
   border-radius: 20px;
   font-size: 0.75rem;
-  font-weight: 500;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-.outcome-indicators p {
-  margin: 0 0 0.5rem 0;
+.ak-out-lbl {
+  margin: 0 0 0.3rem;
+  font-size: 0.88rem;
   color: #374151;
-  font-weight: 500;
-  font-size: 0.9rem;
 }
 
-.outcome-indicators ul {
+.ak-out-indicators {
   margin: 0;
-  padding-left: 1.25rem;
+  padding-left: 1.2rem;
 }
 
-.outcome-indicators li {
-  margin: 0.25rem 0;
-  color: #4b5563;
+.ak-out-indicators li {
   font-size: 0.85rem;
-  line-height: 1.4;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0.15rem 0;
 }
 
-/* Responsive Design */
+/* ---------- Responsive ---------- */
 @media (max-width: 768px) {
-  .ai-status-content {
+  .ak-title-row {
+    flex-direction: column;
+  }
+
+  .ak-banner {
     flex-direction: column;
     text-align: center;
     gap: 1rem;
+    padding: 1.25rem;
   }
 
-  .ai-capabilities {
-    margin-left: 0;
+  .ak-banner-left {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .ak-banner-tags {
     justify-content: center;
     flex-wrap: wrap;
   }
 
-  .tab-navigation {
+  .ak-tabs {
     flex-direction: column;
   }
 
-  .tab-button {
+  .ak-tab {
     justify-content: center;
+    border-bottom: none;
+    border-left: 2px solid transparent;
   }
 
-  .vital-signs-grid {
+  .ak-tab.active {
+    border-bottom: none;
+    border-left-color: #2563eb;
+  }
+
+  .ak-vital-grid {
     grid-template-columns: 1fr;
   }
 
-  .plan-header {
+  .ak-plan-header {
     flex-direction: column;
     gap: 1rem;
   }
 
-  .ai-confidence {
-    margin-left: 0;
-    align-self: stretch;
-  }
-
-  .diagnosis-header,
-  .outcome-header {
+  .ak-dx-top,
+  .ak-out-top {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.4rem;
   }
 
-  .intervention-card {
+  .ak-int {
     flex-direction: column;
-    gap: 1rem;
   }
 
-  .intervention-actions {
-    margin-left: 0;
-    align-self: flex-start;
+  .ak-card {
+    padding: 1.25rem;
   }
 }
 
 @media (max-width: 480px) {
-  .form-section {
+  .ak-card {
     padding: 1rem;
   }
 
-  .plan-section-content {
-    padding: 1rem;
-  }
-
-  .btn-ai-generate {
+  .ak-btn-generate {
     width: 100%;
-    min-width: auto;
+    justify-content: center;
   }
 
-  .generate-section {
-    padding: 1.5rem 1rem;
+  .ak-generate {
+    padding: 1.25rem 1rem;
   }
 }
