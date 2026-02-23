@@ -2,7 +2,7 @@
 
 Aplikasi manajemen asuhan keperawatan berbasis web yang membantu perawat dalam mengelola data pasien, membuat rencana asuhan keperawatan (Askep) berbasis AI, mencatat implementasi tindakan, melakukan evaluasi, dan menghasilkan laporan.
 
-## 🏗️ Arsitektur
+## Arsitektur
 
 ```
 Sistem_Askep/
@@ -21,7 +21,7 @@ Sistem_Askep/
 └── .gitignore
 ```
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Layer     | Teknologi                         |
 | --------- | --------------------------------- |
@@ -31,7 +31,7 @@ Sistem_Askep/
 | Data      | In-memory store (tanpa database)  |
 | CORS      | Enabled untuk development         |
 
-## 🚀 Cara Menjalankan
+## Cara Menjalankan
 
 ### Prasyarat
 
@@ -82,7 +82,7 @@ Aplikasi terbuka di **http://localhost:3000**
 | Username | `admin`     |
 | Password | `admin123`  |
 
-## 📋 Fitur Utama
+## Fitur Utama
 
 ### 1. Autentikasi
 - Login & Register
@@ -128,7 +128,7 @@ Aplikasi terbuka di **http://localhost:3000**
 - Edit profil (nama lengkap, email)
 - Riwayat aktivitas akun
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Auth (`/api/auth`)
 | Method | Endpoint    | Deskripsi             |
@@ -185,7 +185,7 @@ Aplikasi terbuka di **http://localhost:3000**
 | GET    | `/stats`      | Statistik dashboard    |
 | GET    | `/activities` | Aktivitas terbaru      |
 
-## 📁 Struktur Frontend Pages
+## Struktur Frontend Pages
 
 | File               | Halaman                      |
 | ------------------ | ---------------------------- |
@@ -199,7 +199,7 @@ Aplikasi terbuka di **http://localhost:3000**
 | `laporan.js`       | Laporan keperawatan          |
 | `Profile.js`       | Profil & pengaturan akun     |
 
-## ⚠️ Catatan Penting
+## Catatan Penting
 
 - **Data bersifat in-memory** — semua data akan hilang ketika backend di-restart. Cocok untuk development dan demo.
 - **Port default**: Backend = `5000`, Frontend = `3000`.
