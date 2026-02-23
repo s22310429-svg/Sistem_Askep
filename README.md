@@ -198,14 +198,3 @@ Aplikasi terbuka di **http://localhost:3000**
 | `evaluasi.js`      | Evaluasi pasien              |
 | `laporan.js`       | Laporan keperawatan          |
 | `Profile.js`       | Profil & pengaturan akun     |
-
-## Catatan Penting
-
-- **Data bersifat in-memory** — semua data akan hilang ketika backend di-restart. Cocok untuk development dan demo.
-- **Port default**: Backend = `5000`, Frontend = `3000`.
-- **CORS** dikonfigurasi untuk menerima semua origin dalam mode development.
-- Untuk production, disarankan menambahkan database (MySQL/PostgreSQL/MongoDB) dan environment variables.
-
-## 👤 Author
-
-Dibuat sebagai project Sistem Asuhan Keperawatan.
