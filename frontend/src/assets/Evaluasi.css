@@ -1,0 +1,298 @@
+/* Estetik, modern, blue-themed, dark/light mode, responsive */
+.evaluasi-page {
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  min-height: 100vh;
+  padding: 0 0 48px 0;
+  color: #1e293b;
+  transition: background 0.3s, color 0.3s;
+}
+.evaluasi-page.dark {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  color: #e0e7ef;
+}
+.evaluasi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2.5rem 2rem 1.5rem 2rem;
+  background: linear-gradient(90deg, #2563eb 60%, #60a5fa 100%);
+  color: #fff;
+  border-radius: 0 0 32px 32px;
+  box-shadow: 0 8px 32px rgba(37, 99, 235, 0.10);
+  margin-bottom: 2.5rem;
+}
+.evaluasi-header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -1px;
+}
+.evaluasi-header-actions button {
+  background: #fff;
+  color: #2563eb;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-left: 0.75rem;
+  padding: 0.7rem 1.3rem;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.10);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.evaluasi-header-actions button:hover {
+  background: #2563eb;
+  color: #fff;
+}
+.evaluasi-page.dark .evaluasi-header {
+  background: linear-gradient(90deg, #1e293b 60%, #2563eb 100%);
+  color: #fff;
+}
+.evaluasi-page.dark .evaluasi-header-actions button {
+  background: #1e293b;
+  color: #60a5fa;
+}
+.evaluasi-page.dark .evaluasi-header-actions button:hover {
+  background: #60a5fa;
+  color: #1e293b;
+}
+.evaluasi-dashboard-mini {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin: 0 2rem 2.5rem 2rem;
+}
+.evaluasi-pie-chart {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+  padding: 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 160px;
+}
+.evaluasi-page.dark .evaluasi-pie-chart {
+  background: #1e293b;
+}
+.evaluasi-pie-legend {
+  margin-top: 1rem;
+  font-size: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.evaluasi-ai-analysis .ai-analysis-box {
+  background: #e0e7ff;
+  color: #1e40af;
+  border-radius: 14px;
+  padding: 1.2rem 1.5rem;
+  font-size: 1.08rem;
+  font-weight: 500;
+  box-shadow: 0 2px 12px 0 rgba(59,130,246,0.08);
+  margin-top: 0.5rem;
+}
+.evaluasi-page.dark .evaluasi-ai-analysis .ai-analysis-box {
+  background: #1e40af;
+  color: #e0e7ff;
+}
+.evaluasi-progress-section {
+  margin: 0 2rem 2.5rem 2rem;
+}
+.evaluasi-pasien-timeline {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+  margin-bottom: 2rem;
+  padding: 1.5rem 2rem;
+  position: relative;
+}
+.evaluasi-page.dark .evaluasi-pasien-timeline {
+  background: #1e293b;
+}
+.evaluasi-pasien-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.2rem;
+}
+.evaluasi-pasien-nama {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+.evaluasi-status-badge {
+  color: #fff;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 0.3rem 1.1rem;
+  font-size: 1rem;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.evaluasi-timeline {
+  display: flex;
+  align-items: flex-start;
+  gap: 2.5rem;
+  margin-bottom: 1.2rem;
+  position: relative;
+}
+.evaluasi-timeline-step {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.timeline-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(59,130,246,0.10);
+  z-index: 2;
+}
+.evaluasi-timeline-step.done .timeline-dot {
+  background: #22c55e;
+}
+.evaluasi-timeline-step.pending .timeline-dot {
+  background: #eab308;
+}
+.evaluasi-timeline-step.alert .timeline-dot {
+  background: #ef4444;
+}
+.timeline-content {
+  margin-left: 0.7rem;
+  min-width: 110px;
+}
+.timeline-day {
+  font-weight: 600;
+  color: #2563eb;
+  font-size: 1.05rem;
+}
+.timeline-desc {
+  font-size: 0.98rem;
+  color: #64748b;
+}
+.timeline-connector {
+  width: 40px;
+  height: 4px;
+  background: linear-gradient(90deg, #2563eb 60%, #60a5fa 100%);
+  border-radius: 2px;
+  margin-left: 0.7rem;
+  margin-right: 0.7rem;
+  align-self: center;
+}
+.evaluasi-line-chart {
+  margin-top: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+.line-chart-label {
+  font-size: 0.95rem;
+  color: #2563eb;
+  margin-top: 0.2rem;
+}
+.evaluasi-data-section {
+  margin: 0 2rem;
+}
+.evaluasi-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+.evaluasi-page.dark .evaluasi-table {
+  background: #1e293b;
+}
+.evaluasi-table th, .evaluasi-table td {
+  padding: 1rem 0.8rem;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+.evaluasi-table th {
+  background: #e0e7ff;
+  color: #2563eb;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.evaluasi-page.dark .evaluasi-table th {
+  background: #1e40af;
+  color: #e0e7ff;
+}
+.evaluasi-table td {
+  font-size: 1rem;
+  color: #374151;
+}
+.evaluasi-page.dark .evaluasi-table td {
+  color: #e0e7ef;
+}
+.evaluasi-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 2rem;
+}
+.evaluasi-pasien-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+  padding: 1.5rem 1.5rem 1.2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.evaluasi-page.dark .evaluasi-pasien-card {
+  background: #1e293b;
+}
+.evaluasi-pasien-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.7rem;
+}
+.evaluasi-pasien-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.evaluasi-card-step {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.98rem;
+}
+.evaluasi-card-step.done .card-step-day {
+  color: #22c55e;
+}
+.evaluasi-card-step.pending .card-step-day {
+  color: #eab308;
+}
+.evaluasi-card-step.alert .card-step-day {
+  color: #ef4444;
+}
+.card-step-day {
+  font-weight: 600;
+  min-width: 70px;
+}
+.card-step-desc {
+  color: #64748b;
+}
+@media (max-width: 900px) {
+  .evaluasi-header, .evaluasi-dashboard-mini, .evaluasi-progress-section, .evaluasi-data-section {
+    margin: 0 0.5rem 1.5rem 0.5rem;
+    padding: 1.2rem 0.5rem;
+  }
+  .evaluasi-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    border-radius: 0 0 18px 18px;
+  }
+  .evaluasi-dashboard-mini {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+}

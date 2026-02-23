@@ -1,0 +1,229 @@
+.regis-logo-circle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-bottom: 1.2rem;
+}
+.icon-input {
+	position: relative;
+}
+.input-icon {
+	position: absolute;
+	left: 0.95rem;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 1.18rem;
+	color: #2563eb;
+	opacity: 0.85;
+	pointer-events: none;
+}
+.icon-input input {
+	padding-left: 2.3rem !important;
+}
+.regis-form .input-group input::placeholder {
+	color: #9ca3af;
+	opacity: 1;
+}
+.checkbox-group {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.97rem;
+	margin: 0.5rem 0 0.2rem 0;
+}
+.checkbox-group input[type="checkbox"] {
+	width: 1.1em;
+	height: 1.1em;
+	accent-color: #2563eb;
+	border-radius: 4px;
+	margin-right: 0.2em;
+}
+.checkbox-group label {
+	color: #374151;
+	font-weight: 500;
+}
+.checkbox-group a {
+	color: #2563eb;
+	text-decoration: underline;
+	font-weight: 600;
+	transition: color 0.2s;
+}
+.checkbox-group a:hover {
+	color: #1e40af;
+}
+.regis-footer {
+	margin-top: 1.5rem;
+	text-align: center;
+	color: #64748b;
+	font-size: 1rem;
+}
+.regis-footer a {
+	color: #3b82f6;
+	font-weight: 700;
+	text-decoration: underline;
+	transition: color 0.2s;
+}
+.regis-footer a:hover {
+	color: #1e40af;
+}
+/* Regis page blue gradient background and modern card */
+.regis-bg {
+	min-height: 100vh;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: linear-gradient(120deg, #2563eb 0%, #1e40af 100%);
+	position: relative;
+	overflow: hidden;
+}
+.regis-bg::before, .regis-bg::after {
+	content: '';
+	position: absolute;
+	border-radius: 50%;
+	z-index: 0;
+}
+.regis-bg::before {
+	width: 700px;
+	height: 700px;
+	background: rgba(37,99,235,0.13);
+	top: -220px;
+	left: -220px;
+}
+.regis-bg::after {
+	width: 400px;
+	height: 400px;
+	background: rgba(30,64,175,0.10);
+	bottom: -120px;
+	right: -120px;
+}
+
+.regis-card {
+	display: flex;
+	background: #fff;
+	border-radius: 20px;
+	box-shadow: 0 8px 32px 0 rgba(37,99,235,0.10);
+	overflow: hidden;
+	max-width: 900px;
+	width: 100%;
+	position: relative;
+	z-index: 1;
+}
+.regis-left {
+	background: linear-gradient(135deg, #2563eb 80%, #1e40af 100%);
+	color: #fff;
+	padding: 2.5rem 2rem;
+	min-width: 300px;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: flex-start;
+}
+.regis-left h2 {
+	font-size: 1.3rem;
+	font-weight: 700;
+	margin-bottom: 1.2rem;
+	color: #fff;
+}
+.regis-benefit-list {
+	margin-bottom: 1.5rem;
+	font-size: 1rem;
+	line-height: 1.7;
+}
+.regis-note {
+	margin-top: 1.5rem;
+	font-size: 0.98rem;
+	color: #dbeafe;
+}
+.regis-right {
+	flex: 1;
+	padding: 2.5rem 2rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+}
+.regis-title {
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: #2563eb;
+	margin-bottom: 0.5rem;
+}
+.regis-desc {
+	color: #64748b;
+	margin-bottom: 1.5rem;
+}
+.regis-form {
+	margin-bottom: 1.2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.7rem;
+}
+.regis-form .input-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+.regis-form .input-group label {
+	color: #2563eb;
+	font-weight: 600;
+	font-size: 0.97rem;
+}
+.regis-form .input-group input {
+	background: #f4f8ff;
+	border: 1.5px solid #2563eb33;
+	border-radius: 8px;
+	padding: 0.75rem;
+	font-size: 1rem;
+	color: #2563eb;
+	transition: border 0.2s, box-shadow 0.2s;
+}
+.regis-form .input-group input:focus {
+	border: 1.5px solid #2563eb;
+	outline: none;
+	background: #fff;
+	box-shadow: 0 0 0 2px #2563eb22;
+}
+.regis-form .show-password-btn {
+	background: none;
+	border: none;
+	position: absolute;
+	right: 0.75rem;
+	top: 50%;
+	transform: translateY(-50%);
+	font-size: 1.1rem;
+	color: #2563eb;
+	cursor: pointer;
+	padding: 0;
+}
+.regis-footer {
+	margin-top: 1.5rem;
+	text-align: center;
+	color: #2563eb;
+}
+.regis-footer a {
+	color: #2563eb;
+	font-weight: 700;
+	text-decoration: underline;
+	transition: color 0.2s;
+}
+.regis-footer a:hover {
+	color: #1e40af;
+}
+
+.btn-login {
+	width: 100%;
+	background: #2563eb;
+	color: #fff;
+	border: none;
+	padding: 0.85rem;
+	border-radius: 8px;
+	font-size: 1.08rem;
+	font-weight: 700;
+	cursor: pointer;
+	margin-top: 0.2rem;
+	box-shadow: 0 2px 8px 0 #2563eb22;
+	transition: background 0.2s, box-shadow 0.2s;
+}
+.btn-login:hover {
+	background: #1e40af;
+	box-shadow: 0 4px 16px 0 #2563eb33;
+}
